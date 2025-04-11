@@ -1,5 +1,14 @@
 # bluebook
+**project description:**
+A social media platform where users can share their lives and browse posts from others — similar to Instagram.
 
+**Frontend:**
+The interface should be visually appealing, with smooth and intuitive interactions and animations. The website should use responsive design to ensure a good user experience across different screen sizes and resolutions.
+
+**Backend:**
+The core database logic is based on two main document collections: users and posts.
+The platform supports features such as likes, bookmarks, follows, comments, publishing, and deleting posts.
+Users can also upload images and other files, which allows them to update their profile pictures or attach media to their posts.
 ## frontend techs
 
 1. Vue3 --typescript
