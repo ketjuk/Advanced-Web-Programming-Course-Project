@@ -1,0 +1,156 @@
+import express, { RequestHandler } from 'express';
+import { LoginBody } from './interfaces';
+import { SignupBody } from './interfaces';
+import connectDB from './db';
+import { loginUser } from './databaseService/userService';
+import { signupUser } from './databaseService/userService';
+import { createCode } from './databaseService/userService';
+import { checkCode } from './databaseService/userService';
+
+const app = express();
+const port = 3000;
+app.use(express.json());
+
+//connect to Mongo database
+connectDB();
+
+
+/*
+  POST method
+  request with: /log_in
+  body: 
+  {
+    "username"  : string,
+    "password"  : string,
+    "_id"       : string,
+    "code"      : string
+  }
+
+  if success, return with 200 status code and a json message: 
+  {
+    "message"   : "login success",
+    "username"  : <same as above>,
+    "token"     : <a random generated string>
+  }
+
+  if the username or password is missing, return with 400 and a json message: 
+  {
+    "error": "username, password or id should not be blank"
+  }
+
+  if the verification code is wrong, return with 401 status code and a json message: 
+  {
+    "error": "centification code is wrong"
+  }
+
+  if username and password do not match, return with 401 status code and a json message: 
+  {
+    "error": "username and password do not match"
+  }
+
+*/
+app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: express.Response) => {
+  const { username, password, _id, code } = req.body;
+
+  if (!username || !password) {
+    res.status(400).json({ error: 'username, password or id should not be blank' });
+    return;
+  }
+  if (!_id || !code ) {
+    res.status(400).json({ error: '_id and code should not be blank' });
+    return;
+  }
+
+  try {
+    await checkCode(_id, code);
+    const result = await loginUser(username, password); //
+    res.status(200).json({ message: 'login success', ...result });
+  } catch (err) {
+    res.status(401).json({
+      error: (err as Error).message,
+    });
+  }
+}) as RequestHandler);
+
+
+/*
+  POST method
+  request with: /sign_up
+  body: 
+  {
+    "username"  : string,
+    "password"  : strng,
+    "_id"       : string,
+    "code"      : string
+  }
+
+  if success, return with 200 status code and a json message: 
+  {
+    "message": "signup success",
+    "success": true
+  }
+
+  if the username or password is missing, return with 400 and a json message: 
+  {
+    "error": "username and password should not be blank"
+  }
+
+  if the verification _id and code is missing, return with 400 and a json message: 
+  {
+    "error": "_id and code should not be blank"
+  }
+
+  if the verification code is wrong, return with 401 status code and a json message: 
+  {
+    "error": "centification code is wrong"
+  }
+
+  if failed, return with 401 status code and a json message: 
+  {
+    "error": "user already exists"
+  }
+
+*/
+app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: express.Response) => {
+  const { username, password, _id , code } = req.body;
+  if (!username || !password || !_id) {
+    res.status(400).json({ error: 'username and password should not be blank' });
+    return;
+  }
+  if (!_id || !code ) {
+    res.status(400).json({ error: '_id and code should not be blank' });
+    return;
+  }
+
+  try {
+    await checkCode(_id, code);
+    const result = await signupUser(username, password); 
+    res.status(200).json({ message: 'signup success', success: result });
+  } catch (err) {
+    res.status(401).json({
+      error: (err as Error).message,
+    });
+  }
+}) as RequestHandler);
+
+/*
+  GET method
+  request with: /request_code
+  no additional information needed for a request
+  always generate and return a new record of _id and code:
+  {
+  "message": {
+    "_id": "67f829c85a896574dc650237",
+    "code": "4674"
+  }
+}
+*/
+app.get('/request_code', (async (req: express.Request<{}, {}, SignupBody>, res: express.Response) => {
+  const code = await createCode();
+  res.status(200).json({ message: code });
+}) as RequestHandler);
+
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
