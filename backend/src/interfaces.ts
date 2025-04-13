@@ -5,7 +5,6 @@ export interface LoginBody {
     code      : string;
   }
   
-  // 注册接口类型
   export interface SignupBody {
     username  : string;
     password  : string;
