@@ -1,11 +1,9 @@
 import express, { RequestHandler } from 'express';
-import { LoginBody } from './interfaces';
-import { SignupBody } from './interfaces';
+import { LoginBody } from './types/request';
+import { SignupBody } from './types/request';
 import connectDB from './db';
-import { loginUser } from './databaseService/userService';
-import { signupUser } from './databaseService/userService';
-import { createCode } from './databaseService/userService';
-import { checkCode } from './databaseService/userService';
+import { loginUser, signupUser, createCode, checkCode } from './databaseService/userService';
+import { LoginResponse } from './types/response';
 
 const app = express();
 const port = 3000;
@@ -56,7 +54,7 @@ app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: expres
     res.status(400).json({ error: 'username, password or id should not be blank' });
     return;
   }
-  if (!_id || !code ) {
+  if (!_id || !code) {
     res.status(400).json({ error: '_id and code should not be blank' });
     return;
   }
@@ -111,20 +109,20 @@ app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: expres
   }
 
 */
-app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: express.Response) => {
-  const { username, password, _id , code } = req.body;
+app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: express.Response<LoginResponse>) => {
+  const { username, password, _id, code } = req.body;
   if (!username || !password || !_id) {
     res.status(400).json({ error: 'username and password should not be blank' });
     return;
   }
-  if (!_id || !code ) {
+  if (!_id || !code) {
     res.status(400).json({ error: '_id and code should not be blank' });
     return;
   }
 
   try {
     await checkCode(_id, code);
-    const result = await signupUser(username, password); 
+    const result = await signupUser(username, password);
     res.status(200).json({ message: 'signup success', success: result });
   } catch (err) {
     res.status(401).json({
