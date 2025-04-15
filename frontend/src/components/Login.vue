@@ -80,14 +80,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const dialogFormVisible = ref(false)
 const activeTab = ref<'login' | 'register'>('login')
-const formLabelWidth = '100px'
 
-// 登录表单数据
 const loginForm = reactive({
   username: '',
   password: '',
@@ -105,11 +103,11 @@ const handleLogin = () => {
     if (valid) {
       console.log('Logging in:', loginForm)
       dialogFormVisible.value = false
+      loginFormRef.value?.resetFields()
     }
   })
 }
 
-// 注册表单数据
 const registerForm = reactive({
   username: '',
   password: '',
@@ -141,9 +139,25 @@ const handleRegister = () => {
     if (valid) {
       console.log('Registering:', registerForm)
       dialogFormVisible.value = false
+      registerFormRef.value?.resetFields()
     }
   })
 }
+
+watch(dialogFormVisible, (visible) => {
+  if (!visible) {
+    loginFormRef.value?.resetFields()
+    registerFormRef.value?.resetFields()
+  }
+})
+
+watch(activeTab, (tab) => {
+  if (tab === 'login') {
+    loginFormRef.value?.resetFields()
+  } else if (tab === 'register') {
+    registerFormRef.value?.resetFields()
+  }
+})
 </script>
 
 <style scoped>
@@ -192,6 +206,6 @@ const handleRegister = () => {
 }
 
 :deep(.el-form-item) {
-  margin-bottom: 0px;
+  margin-bottom: 15px;
 }
 </style>
