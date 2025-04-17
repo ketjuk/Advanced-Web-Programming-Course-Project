@@ -1,0 +1,52 @@
+import axios from 'axios';
+
+import type { LoginBody, SignupBody } from '../../../backend/src/types/request';
+import type { APIResponse, CodeResponse, LoginResponse, SignupResponse } from '../../../backend/src/types/response';
+const API_URL = 'http://127.0.0.1:3000/';
+
+
+// Create request/response logger
+const logRequest = (config: any) => {
+  console.log(`Request: ${config.method?.toUpperCase()} ${config.url}`, config.data || '');
+  return config;
+};
+
+const logResponse = (response: any) => {
+  console.log(`Response: ${response.status} ${response.config.url}`, response.data);
+  return response;
+};
+
+const logError = (error: any) => {
+  const res = error.response;
+  console.error('API Error:', res?.status, res?.data || error.message);
+  return Promise.resolve(res); // 返回整个 response，让调用方能拿到 data
+};
+
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request/response logging
+api.interceptors.request.use(logRequest, logError);
+api.interceptors.response.use(logResponse, logError);
+
+export const API_Login = async (data: LoginBody): Promise<LoginResponse> => {
+  const response = await api.post<LoginResponse>('/log_in', data);
+  console.log('Login response:', response);
+  return response.data
+
+
+};
+
+export const API_Signup = async (data: SignupBody): Promise<SignupResponse> => {
+  const response = await api.post<SignupResponse>('/sign_up', data);
+  return response.data;
+}
+export const API_GetCode = async (): Promise<CodeResponse> => {
+  const response = await api.get<CodeResponse>('/request_code');
+  return response.data;
+}
