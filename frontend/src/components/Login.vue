@@ -115,6 +115,7 @@
 import { ref, reactive, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
 
 const dialogFormVisible = ref(false)
 const activeTab = ref<'login' | 'register'>('login')
@@ -134,7 +135,7 @@ const loginRules: FormRules = {
 
 const loginFormRef = ref<FormInstance>()
 
-const handleLogin = () => {
+const handleLogin = async () => {
   loginFormRef.value?.validate(async (valid) => {
     if (valid) {
       if (loginForm.captcha !== captchaCode.value) {
@@ -144,34 +145,22 @@ const handleLogin = () => {
       }
 
       try {
-        const response = await fetch('http://localhost:3000/log_in', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: loginForm.username,
-            password: loginForm.password,
-            code: loginForm.captcha,
-            _id: loginForm._id,
-          }),
+        const response = await axios.post('http://localhost:3000/log_in', {
+          username: loginForm.username,
+          password: loginForm.password,
+          code: loginForm.captcha,
+          _id: loginForm._id,
         })
 
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Login failed')
-        }
-
-        if (!data.success) {
-          throw new Error(data.message || 'Login failed')
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Login failed')
         }
 
         ElMessage.success('Login successful')
         dialogFormVisible.value = false
         loginFormRef.value?.resetFields()
       } catch (error: any) {
-        ElMessage.error(error.message)
+        ElMessage.error(error.message || 'Login failed')
         refreshCaptcha()
       }
     }
@@ -208,7 +197,7 @@ const registerRules: FormRules = {
 
 const registerFormRef = ref<FormInstance>()
 
-const handleRegister = () => {
+const handleRegister = async () => {
   registerFormRef.value?.validate(async (valid) => {
     if (valid) {
       if (registerForm.captcha !== registerCaptchaCode.value) {
@@ -218,30 +207,22 @@ const handleRegister = () => {
       }
 
       try {
-        const response = await fetch('http://localhost:3000/sign_up', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: registerForm.username,
-            password: registerForm.password,
-            _id: registerForm._id,
-            code: registerForm.captcha,
-          }),
+        const response = await axios.post('http://localhost:3000/sign_up', {
+          username: registerForm.username,
+          password: registerForm.password,
+          _id: registerForm._id,
+          code: registerForm.captcha,
         })
 
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Registration failed')
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Registration failed')
         }
 
         ElMessage.success('Registration successful')
         dialogFormVisible.value = false
         registerFormRef.value?.resetFields()
       } catch (error: any) {
-        ElMessage.error(error.message)
+        ElMessage.error(error.message || 'Registration failed')
         refreshRegisterCaptcha()
       }
     }
