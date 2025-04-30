@@ -25,6 +25,22 @@
                   placeholder="Password"
                 />
               </el-form-item>
+              <el-form-item prop="captcha" label=" ">
+                <div style="display: flex; align-items: center">
+                  <el-input
+                    v-model="loginForm.captcha"
+                    placeholder="Enter Captcha"
+                    style="flex: 1; margin-right: 10px"
+                  />
+                  <canvas
+                    ref="captchaCanvas"
+                    width="100"
+                    height="40"
+                    @click="refreshCaptcha"
+                    style="cursor: pointer; border: 1px solid #ccc; border-radius: 5px"
+                  ></canvas>
+                </div>
+              </el-form-item>
             </el-form>
           </div>
         </el-tab-pane>
@@ -62,6 +78,22 @@
                   placeholder="Confirm Password"
                 />
               </el-form-item>
+              <el-form-item prop="captcha" label=" ">
+                <div style="display: flex; align-items: center">
+                  <el-input
+                    v-model="registerForm.captcha"
+                    placeholder="Enter Captcha"
+                    style="flex: 1; margin-right: 10px"
+                  />
+                  <canvas
+                    ref="registerCaptchaCanvas"
+                    width="100"
+                    height="40"
+                    @click="refreshRegisterCaptcha"
+                    style="cursor: pointer; border: 1px solid #ccc; border-radius: 5px"
+                  ></canvas>
+                </div>
+              </el-form-item>
             </el-form>
           </div>
         </el-tab-pane>
@@ -82,6 +114,7 @@
 <script lang="ts" setup>
 import { ref, reactive, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 const dialogFormVisible = ref(false)
 const activeTab = ref<'login' | 'register'>('login')
@@ -89,21 +122,58 @@ const activeTab = ref<'login' | 'register'>('login')
 const loginForm = reactive({
   username: '',
   password: '',
+  captcha: '',
+  _id: '',
 })
 
 const loginRules: FormRules = {
   username: [{ required: true, message: 'Please input username', trigger: 'blur' }],
   password: [{ required: true, message: 'Please input password', trigger: 'blur' }],
+  captcha: [{ required: true, message: 'Please enter captcha', trigger: 'blur' }],
 }
 
 const loginFormRef = ref<FormInstance>()
 
 const handleLogin = () => {
-  loginFormRef.value?.validate((valid) => {
+  loginFormRef.value?.validate(async (valid) => {
     if (valid) {
-      console.log('Logging in:', loginForm)
-      dialogFormVisible.value = false
-      loginFormRef.value?.resetFields()
+      if (loginForm.captcha !== captchaCode.value) {
+        ElMessage.error('Incorrect captcha')
+        refreshCaptcha()
+        return
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/log_in', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: loginForm.username,
+            password: loginForm.password,
+            code: loginForm.captcha,
+            _id: loginForm._id,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Login failed')
+        }
+
+        if (!data.success) {
+          throw new Error(data.message || 'Login failed')
+        }
+
+        ElMessage.success('Login successful')
+        dialogFormVisible.value = false
+        loginFormRef.value?.resetFields()
+      } catch (error: any) {
+        ElMessage.error(error.message)
+        refreshCaptcha()
+      }
     }
   })
 }
@@ -112,6 +182,9 @@ const registerForm = reactive({
   username: '',
   password: '',
   confirmPassword: '',
+  captcha: '',
+  _id: '',
+  code: '',
 })
 
 const registerRules: FormRules = {
@@ -130,22 +203,58 @@ const registerRules: FormRules = {
       trigger: 'blur',
     },
   ],
+  captcha: [{ required: true, message: 'Please enter captcha', trigger: 'blur' }],
 }
 
 const registerFormRef = ref<FormInstance>()
 
 const handleRegister = () => {
-  registerFormRef.value?.validate((valid) => {
+  registerFormRef.value?.validate(async (valid) => {
     if (valid) {
-      console.log('Registering:', registerForm)
-      dialogFormVisible.value = false
-      registerFormRef.value?.resetFields()
+      if (registerForm.captcha !== registerCaptchaCode.value) {
+        ElMessage.error('Incorrect captcha')
+        refreshRegisterCaptcha()
+        return
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/sign_up', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: registerForm.username,
+            password: registerForm.password,
+            _id: registerForm._id,
+            code: registerForm.captcha,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Registration failed')
+        }
+
+        ElMessage.success('Registration successful')
+        dialogFormVisible.value = false
+        registerFormRef.value?.resetFields()
+      } catch (error: any) {
+        ElMessage.error(error.message)
+        refreshRegisterCaptcha()
+      }
     }
   })
 }
 
 watch(dialogFormVisible, (visible) => {
-  if (!visible) {
+  if (visible) {
+    if (activeTab.value === 'login') {
+      fetchCaptchaCode()
+    } else {
+      fetchRegisterCaptchaCode()
+    }
     loginFormRef.value?.resetFields()
     registerFormRef.value?.resetFields()
   }
@@ -154,10 +263,99 @@ watch(dialogFormVisible, (visible) => {
 watch(activeTab, (tab) => {
   if (tab === 'login') {
     loginFormRef.value?.resetFields()
+    fetchCaptchaCode()
   } else if (tab === 'register') {
     registerFormRef.value?.resetFields()
+    fetchRegisterCaptchaCode()
   }
 })
+
+const captchaCode = ref('')
+const captchaCanvas = ref<HTMLCanvasElement>()
+
+const drawCaptcha = () => {
+  console.log('Drawing captcha:', captchaCode.value)
+  if (!captchaCanvas.value) return
+  const ctx = captchaCanvas.value.getContext('2d')
+  if (!ctx) return
+
+  ctx.clearRect(0, 0, 100, 40)
+  ctx.fillStyle = '#f0f0f0'
+  ctx.fillRect(0, 0, 100, 40)
+
+  ctx.font = '24px Arial'
+  ctx.fillStyle = '#333'
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
+  ctx.fillText(captchaCode.value, 50, 20)
+
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`
+    ctx.beginPath()
+    ctx.moveTo(Math.random() * 100, Math.random() * 40)
+    ctx.lineTo(Math.random() * 100, Math.random() * 40)
+    ctx.stroke()
+  }
+}
+
+const fetchCaptchaCode = async () => {
+  const res = await fetch('http://localhost:3000/request_code')
+  const data = await res.json()
+  console.log('Data received:', data)
+  captchaCode.value = data.data.code
+  loginForm._id = data.data._id
+  drawCaptcha()
+}
+
+const refreshCaptcha = () => {
+  fetchCaptchaCode()
+}
+
+const registerCaptchaCode = ref('')
+const registerCaptchaCanvas = ref<HTMLCanvasElement>()
+
+const drawRegisterCaptcha = () => {
+  if (!registerCaptchaCanvas.value) return
+  const ctx = registerCaptchaCanvas.value.getContext('2d')
+  if (!ctx) return
+
+  ctx.clearRect(0, 0, 100, 40)
+  ctx.fillStyle = '#f0f0f0'
+  ctx.fillRect(0, 0, 100, 40)
+
+  ctx.font = '24px Arial'
+  ctx.fillStyle = '#333'
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
+  ctx.fillText(registerCaptchaCode.value, 50, 20)
+
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`
+    ctx.beginPath()
+    ctx.moveTo(Math.random() * 100, Math.random() * 40)
+    ctx.lineTo(Math.random() * 100, Math.random() * 40)
+    ctx.stroke()
+  }
+}
+
+const fetchRegisterCaptchaCode = async () => {
+  const res = await fetch('http://localhost:3000/request_code')
+  const data = await res.json()
+  registerCaptchaCode.value = data.data.code
+  drawRegisterCaptcha()
+}
+
+const refreshRegisterCaptcha = async () => {
+  const res = await fetch('http://localhost:3000/request_code')
+  const result = await res.json()
+
+  if (result.success) {
+    const captcha = result.data
+    registerCaptchaCode.value = captcha.code
+    registerForm._id = captcha._id
+    drawRegisterCaptcha()
+  }
+}
 </script>
 
 <style scoped>
