@@ -68,6 +68,16 @@ export const checkCode = async(_id: string, code: string) => {
   return true;
 }
 
+//get user detail by username
+export const findUserByUsername = async (username: string) => {
+  return await User.findOne({ username });
+};
+
+//get login detail by token
+export const findLoginInfoByToken = async (token: string) => {
+  return await LoginUser.findOne({ token });
+};
+
 //log out
 export const logoutUser = async (token: string) => {
   await LoginUser.deleteOne({ token });
