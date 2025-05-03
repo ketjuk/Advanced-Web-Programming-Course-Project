@@ -5,6 +5,7 @@ const UserTable = new mongoose.Schema({
   password: { type: String, required: true },
   image: { type: String, default: '' },
 
+  writtenComments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
   likedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
   savedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Article' }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

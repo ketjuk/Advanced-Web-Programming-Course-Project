@@ -23,6 +23,11 @@ export interface CreateCommentBody {
   content     : string;
 }
 
+export interface CreateReplyBody {
+  comment_id: string;
+  content: string;
+}
+
 export interface BrowseArticleBody {
   sort_by?    : 'time' | 'likes';
   start?      : number;
@@ -32,4 +37,8 @@ export interface BrowseArticleBody {
 
 export interface ArticleDetailBody {
   article_id  : string;
+}
+
+export interface SearchUserBody {
+  username    : string;
 }

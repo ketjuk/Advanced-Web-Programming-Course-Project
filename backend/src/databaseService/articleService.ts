@@ -39,6 +39,7 @@ export const addSecondLevelComment = async (commentId: string, userId: string, c
   if (!comment) throw new Error('Comment not found');
 
   const reply = {
+    _id: new mongoose.Types.ObjectId(),
     author: userId,
     content,
     createdAt: new Date(),
@@ -127,7 +128,31 @@ export const getPostDetail = async (postId: string, currentUserId: string) => {
   };
 };
 
+//specifically for getting all the articles from like/save list by an user
+export async function getArticlesByUser(ids: string[]) {
+  const articles = await Article.find({ _id: { $in: ids } })
+    .select('title createdAt')
+    .lean();
 
+  return articles.map(article => ({
+    article_id: article._id.toString(),
+    title     : article.title,
+    createdAt : new Date(article.createdAt).toISOString()
+  }));
+}
 
+//specifically for getting all the comments from an user
+export async function getUserComments(userId: string) {
+  const comments = await Comment.find({ author: userId })
+    .select('content createdAt article')
+    .lean();
+
+  return comments.map(comment => ({
+    comment_id : comment._id.toString(),
+    article_id : comment.article.toString(),
+    content    : comment.content || '',
+    createdAt  : new Date(comment.createdAt).toISOString()
+  }));
+}
   
   

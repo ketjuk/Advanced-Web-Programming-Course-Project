@@ -1,9 +1,9 @@
 import express, { RequestHandler } from 'express';
-import { LoginBody, SignupBody, CreateArticleBody, CreateCommentBody, BrowseArticleBody, ArticleDetailBody } from './types/request';
+import { LoginBody, SignupBody, CreateArticleBody, CreateCommentBody, BrowseArticleBody, ArticleDetailBody, SearchUserBody, CreateReplyBody } from './types/request';
 import connectDB from './db';
-import { loginUser, signupUser, createCode, checkCode, findUserByUsername, findLoginInfoByToken } from './databaseService/userService';
-import { createArticle, addComment, getBrowseArticle, getPostDetail } from './databaseService/articleService';
-import { CodeResponse, LoginResponse, SignupResponse, CreateArticleResponse, CreateCommentResponse, BrowseArticlesResponse, ArticleDetailResponse } from './types/response';
+import { loginUser, signupUser, createCode, checkCode, findUserByUsername, findLoginInfoByToken, addCommentToUser, getFollowingUsers } from './databaseService/userService';
+import { createArticle, addComment, getBrowseArticle, getPostDetail, getArticlesByUser, getUserComments, addSecondLevelComment } from './databaseService/articleService';
+import { CodeResponse, LoginResponse, SignupResponse, CreateArticleResponse, CreateCommentResponse, CommentReplyResponse, BrowseArticlesResponse, ArticleDetailResponse, SearchUserResponse } from './types/response';
 
 const app = express();
 const port = 3000;
@@ -307,6 +307,8 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
 
     const comment = await addComment(article_id, user._id.toString(),content);
 
+    const update = await addCommentToUser(user._id.toString(), comment._id.toString());
+
     const response: CreateCommentResponse = {
       success: true,
       data: {
@@ -323,6 +325,208 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
   }
 }) as RequestHandler);
 
+
+/*
+  POST method
+  request with /create_reply
+  header:
+  Authentication: <token>
+  body:
+  {
+    "comment_id": "6816901d1737568ba4f401de",
+    "content": "test reply"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "_id": "6816905e1737568ba4f401ec",
+      "content": "test reply",
+      "createdAt": "2025-05-03T21:53:34.457Z",
+      "author": {
+        "username": "111@11.com",
+        "image": ""
+      },
+      "isMine": true
+    }
+  }
+  
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if article id is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing article id"
+  }
+
+  if comment_id or content is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing comment id or content"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+
+  if the comment_id is wrong
+  {
+  "error": "Comment not found"
+  }
+*/
+app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>, res: express.Response<CommentReplyResponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
+    return;
+  }
+
+  const { comment_id, content } = req.body;
+  if (!comment_id || !content) {
+    res.status(400).json({ error: 'Missing comment id or content' });
+    return;
+  }
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error('User not found');
+
+    const reply = await addSecondLevelComment(comment_id, user._id.toString(), content);
+
+    const response: CommentReplyResponse = {
+      success: true,
+      data: {
+        _id: reply._id?.toString?.() || '',
+        content: reply.content,
+        createdAt: reply.createdAt.toISOString(),
+        author: {
+          username: user.username,
+          image: user.image,
+        },
+        isMine: true,
+      }
+    };
+
+    res.status(201).json(response);
+  } catch (err) {
+    res.status(401).json({ error: (err as Error).message });
+  }
+}) as RequestHandler);
+
+/*
+  POST method
+  request with /create_reply
+  header:
+  Authentication: <token>
+  body:
+  {
+    "username": "111@11.com"
+  }
+
+  if success, return with 201 status code and a json message:
+{
+  "success": true,
+  "data": {
+    "username": "111@11.com",
+    "image": "",
+    "writtenComments": [
+      {
+        "comment_id": "681538fd0f1184e1ecade1e1",
+        "article_id": "6812251120cbc77f8a604be3",
+        "content": "111",
+        "createdAt": "2025-05-02T21:28:29.768Z"
+      },
+      {
+        "comment_id": "681539e0f3a1397d9a07b14d",
+        "article_id": "6812251120cbc77f8a604be3",
+        "content": "123",
+        "createdAt": "2025-05-02T21:32:16.227Z"
+      },
+      {
+        "comment_id": "6816901d1737568ba4f401de",
+        "article_id": "6812251120cbc77f8a604be3",
+        "content": "123",
+        "createdAt": "2025-05-03T21:52:29.723Z"
+      }
+    ],
+    "likedArticles": [],
+    "savedArticles": [],
+    "following": []
+  }
+}
+  
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if username is empty, return with 400 status code and a jaon message:
+  {
+  "error": "Missing username"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+
+  if the username is wrong
+  {
+  "error": "User not found"
+  }
+*/
+app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, res: express.Response<SearchUserResponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  if (!token) return res.status(400).json({ error: 'Missing token' });
+
+  const {username} = req.body;
+  if(!username) return res.status(400).json({ error: 'Missing username' });
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(username);
+    if (!user) throw new Error('User not found');
+
+    const writtenComments = await getUserComments(user._id.toString());
+    const likedArticles = await getArticlesByUser(user.likedArticles.map(id => id.toString()));
+    const savedArticles = await getArticlesByUser(user.savedArticles.map(id => id.toString()));
+    const following = await getFollowingUsers(user.following.map(id => id.toString()));
+
+    const response: SearchUserResponse = {
+      success: true,
+      data: {
+        username: user.username,
+        image: user.image || '',
+        writtenComments,
+        likedArticles,
+        savedArticles,
+        following
+      }
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(401).json({ error: (error as Error).message });
+  }
+}) as RequestHandler);
 
 /*
   POST method
