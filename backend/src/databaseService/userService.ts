@@ -65,6 +65,8 @@ export const checkCode = async(_id: string, code: string) => {
     throw new Error('Verification code is wrong');
   }
 
+  await VerificationCodeTable.findByIdAndDelete(_id);
+
   return true;
 }
 
@@ -110,7 +112,7 @@ export const likeArticle = async (userId: string, articleId: string) => {
   );
 };
 
-//cancel like
+//cancel like article
 export const unlikeArticle = async (userId: string, articleId: string) => {
   return await User.findByIdAndUpdate(
     userId,
@@ -156,7 +158,7 @@ export const unfollowUser = async (userId: string, targetUserId: string) => {
   );
 };
 
-//specifically for getting the following list by an user
+//specifically for getting the following list from an user
 export const getFollowingUsers = async (userIds: string[]) => {
   const users = await User.find({ _id: { $in: userIds } })
     .select('username image')

@@ -36,6 +36,10 @@ export interface CreateCommentRes {
   replies         : never[]
 }
 
+export interface DeleteCommentRes {
+  message         : string;
+}
+
 export interface BrowseArticleRes {//single article
   article_id      : string;
   title           : string;
@@ -110,6 +114,13 @@ export interface SearchUserRes {
   }[];
 }
 
+export interface LikeArticleRes {
+  message         : string;
+}
+
+export interface UnlikeArticleRes {
+  message         : string;
+}
 
 
 export type SignupResponse          = APIResponse<SignupRes>;
@@ -117,8 +128,10 @@ export type LoginResponse           = APIResponse<LoginRes>;
 export type CodeResponse            = APIResponse<CodeRes>;
 export type CreateArticleResponse   = APIResponse<CreateArticleRes>;
 export type CreateCommentResponse   = APIResponse<CreateCommentRes>;
-export type CommentReplyResponse   = APIResponse<CommentReplyRes>;
+export type DeleteCommentResponse   = APIResponse<DeleteCommentRes>;
+export type CommentReplyResponse    = APIResponse<CommentReplyRes>;
 export type BrowseArticlesResponse  = APIResponse<BrowseArticlesRes>;
 export type ArticleDetailResponse   = APIResponse<ArticleDetailRes>;
 export type SearchUserResponse      = APIResponse<SearchUserRes>;
-
+export type LikeArticleResponse     = APIResponse<LikeArticleRes>;
+export type UnlikeArticleResponse   = APIResponse<UnlikeArticleRes>;

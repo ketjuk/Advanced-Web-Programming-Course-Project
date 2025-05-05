@@ -4,6 +4,10 @@ import Comment from '../databaseModel/createCommentTable';
 import User from '../databaseModel/createUserTable';
 import { SortOrder } from 'mongoose';
 
+export const articleExists = async (articleId: string): Promise<boolean> => {
+  return await Article.exists({ _id: articleId }) !== null;
+};
+
 export const createArticle = async (title: string, category: string, content: string, authorId: string) => {
   const newPost = new Article({
     title,
@@ -16,7 +20,6 @@ export const createArticle = async (title: string, category: string, content: st
   await newPost.save();
   return newPost;
 };
-
 
 export const addComment = async (postId: string, userId: string, content: string) => {
   const post = await Article.findById(postId);
@@ -32,6 +35,23 @@ export const addComment = async (postId: string, userId: string, content: string
   await post.save();
 
   return newComment;
+};
+
+export const deleteCommentById = async (commentId: string, userId: string) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) throw new Error('Comment not found');
+
+  if (comment.author.toString() !== userId.toString()) {
+    throw new Error('Unauthorized: You are not the author of this comment');
+  }
+
+  await Comment.findByIdAndDelete(commentId);
+
+  await Article.findByIdAndUpdate(comment.article, {
+    $pull: { comments: commentId }
+  });
+
+  return true;
 };
 
 export const addSecondLevelComment = async (commentId: string, userId: string, content: string) => {
@@ -128,7 +148,7 @@ export const getPostDetail = async (postId: string, currentUserId: string) => {
   };
 };
 
-//specifically for getting all the articles from like/save list by an user
+//specifically for getting all the articles from like/save list from an user
 export async function getArticlesByUser(ids: string[]) {
   const articles = await Article.find({ _id: { $in: ids } })
     .select('title createdAt')
@@ -154,5 +174,4 @@ export async function getUserComments(userId: string) {
     createdAt  : new Date(comment.createdAt).toISOString()
   }));
 }
-  
   

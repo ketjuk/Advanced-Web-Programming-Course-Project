@@ -23,6 +23,10 @@ export interface CreateCommentBody {
   content     : string;
 }
 
+export interface DeleteCommentBody {
+  comment_id  : string;
+}
+
 export interface CreateReplyBody {
   comment_id: string;
   content: string;
@@ -41,4 +45,12 @@ export interface ArticleDetailBody {
 
 export interface SearchUserBody {
   username    : string;
+}
+
+export interface LikeArticlebody {
+  article_id  : string;
+}
+
+export interface UnlikeArticlebody {
+  article_id  : string;
 }

@@ -1,9 +1,28 @@
 import express, { RequestHandler } from 'express';
-import { LoginBody, SignupBody, CreateArticleBody, CreateCommentBody, BrowseArticleBody, ArticleDetailBody, SearchUserBody, CreateReplyBody } from './types/request';
+//request
+import {  LoginBody, SignupBody, 
+          CreateArticleBody, 
+          BrowseArticleBody, ArticleDetailBody, 
+          CreateCommentBody, DeleteCommentBody, CreateReplyBody, 
+          LikeArticlebody, UnlikeArticlebody, 
+          SearchUserBody } from './types/request';
 import connectDB from './db';
-import { loginUser, signupUser, createCode, checkCode, findUserByUsername, findLoginInfoByToken, addCommentToUser, getFollowingUsers } from './databaseService/userService';
-import { createArticle, addComment, getBrowseArticle, getPostDetail, getArticlesByUser, getUserComments, addSecondLevelComment } from './databaseService/articleService';
-import { CodeResponse, LoginResponse, SignupResponse, CreateArticleResponse, CreateCommentResponse, CommentReplyResponse, BrowseArticlesResponse, ArticleDetailResponse, SearchUserResponse } from './types/response';
+//user database
+import {  loginUser, signupUser, 
+          createCode, checkCode, 
+          findUserByUsername, findLoginInfoByToken, 
+          addCommentToUser, deleteCommentToUser, getFollowingUsers, 
+          likeArticle, unlikeArticle } from './databaseService/userService';
+//article database
+import {  articleExists, createArticle, getBrowseArticle, getPostDetail, 
+          addComment, deleteCommentById, addSecondLevelComment,
+          getArticlesByUser, getUserComments } from './databaseService/articleService';
+//response
+import {  CodeResponse, LoginResponse, SignupResponse, 
+          CreateCommentResponse, DeleteCommentResponse, CommentReplyResponse, 
+          CreateArticleResponse, BrowseArticlesResponse, ArticleDetailResponse, 
+          LikeArticleResponse, UnlikeArticleResponse,
+          SearchUserResponse } from './types/response';
 
 const app = express();
 const port = 3000;
@@ -325,6 +344,83 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
   }
 }) as RequestHandler);
 
+/*
+  POST method
+  request with /delete_comment
+  header:
+  Authentication: <token>
+  {
+    "comment_id": "6816901d1737568ba4f401de"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "successfully deleted the comment"
+    }
+  }
+  
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if comment id is not matched with any comments, return with 401 status code and a json message:
+  {
+    "error": "Comment not found"
+  }
+
+  if the token is not from the author of the comment, return with 401 status code and a json message:
+  {
+    "error": "Unauthorized: You are not the author of this comment"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+*/
+app.post('/delete_comment', (async (req: express.Request<{}, {}, DeleteCommentBody>, res: express.Response<DeleteCommentResponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
+    return;
+  }
+  const {comment_id} = req.body;
+  if (!comment_id) {
+    res.status(400).json({ error: 'Missing comment id' });
+    return;
+  }
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error('User not found');
+
+    const comment = await deleteCommentById(comment_id, user._id.toString());
+
+    const update = await deleteCommentToUser(user._id.toString(), comment_id);
+
+    const response: DeleteCommentResponse = {
+      success: true,
+      data: {
+        message: "successfully deleted the comment",
+      },
+    };    
+
+    res.status(201).json(response);
+  } catch (err) {
+    res.status(401).json({ error: (err as Error).message });
+  }
+}) as RequestHandler);
 
 /*
   POST method
@@ -379,7 +475,7 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
 
   if the comment_id is wrong
   {
-  "error": "Comment not found"
+    "error": "Comment not found"
   }
 */
 app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>, res: express.Response<CommentReplyResponse | { error: string }>) => {
@@ -426,7 +522,7 @@ app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>,
 
 /*
   POST method
-  request with /create_reply
+  request with /search_user
   header:
   Authentication: <token>
   body:
@@ -478,7 +574,7 @@ app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>,
 
   if username is empty, return with 400 status code and a jaon message:
   {
-  "error": "Missing username"
+    "error": "Missing username"
   }
 
   (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
@@ -488,7 +584,7 @@ app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>,
 
   if the username is wrong
   {
-  "error": "User not found"
+    "error": "User not found"
   }
 */
 app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, res: express.Response<SearchUserResponse | { error: string }>) => {
@@ -677,7 +773,7 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
 
   if article id is not matched with any articles, return with 401 status code and a json message:
   {
-  "error": "Post not found"
+    "error": "Post not found"
   }
 */
 app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBody>, res: express.Response<ArticleDetailResponse | { error: string }>) => {
@@ -715,12 +811,164 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
       },
     };
     
-    res.status(200).json(response);
+    res.status(201).json(response);
   }
   catch(error) {
     res.status(401).json({ error: (error as Error).message });
   }
 }) as RequestHandler);
+
+
+/*
+  POST method
+  request with /like_article
+  header:
+  Authentication: <token>
+  body:
+  {
+    "article_id": "6812251120cbc77f8a604be3"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "successfully liked the article"
+    }
+  }
+
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+
+  if article id is not matched with any articles, return with 401 status code and a json message:
+  {
+    "error": "Article not found"
+  }
+*/
+app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticlebody>, res: express.Response<LikeArticleResponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  let {article_id} = req.body;
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
+    return;
+  }
+  if (!article_id) {
+    res.status(400).json({ error: 'Missing article id' });
+    return;
+  }
+  if (!(await articleExists(article_id))) {
+    res.status(404).json({ error: 'Article not found' });
+    return;
+  }
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error('User not found');
+
+    const article = await likeArticle(user._id.toString(), article_id);
+
+    const response: LikeArticleResponse = {
+      success: true,
+      data: {
+        message: "successfully liked the article",
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(401).json({ error: (error as Error).message });
+  }
+}) as RequestHandler);
+
+/*
+  POST method
+  request with /unlike_article
+  header:
+  Authentication: <token>
+  body:
+  {
+    "article_id": "6812251120cbc77f8a604be3"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "successfully unliked the article"
+    }
+  }
+
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+
+  if article id is not matched with any articles, return with 401 status code and a json message:
+  {
+    "error": "Article not found"
+  }
+*/
+app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticlebody>, res: express.Response<UnlikeArticleResponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  let {article_id} = req.body;
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
+    return;
+  }
+  if (!article_id) {
+    res.status(400).json({ error: 'Missing article id' });
+    return;
+  }
+  if (!(await articleExists(article_id))) {
+    res.status(404).json({ error: 'Article not found' });
+    return;
+  }
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error('User not found');
+
+    const article = await unlikeArticle(user._id.toString(), article_id);
+
+    const response: UnlikeArticleResponse = {
+      success: true,
+      data: {
+        message: "successfully unliked the article",
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(401).json({ error: (error as Error).message });
+  }
+}) as RequestHandler);
+
 
 
 app.listen(port, () => {
