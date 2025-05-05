@@ -119,6 +119,7 @@ import axios from 'axios'
 
 const dialogFormVisible = ref(false)
 const activeTab = ref<'login' | 'register'>('login')
+const emit = defineEmits(['login-success'])
 
 const loginForm = reactive({
   username: '',
@@ -153,8 +154,15 @@ const handleLogin = async () => {
         })
 
         if (!response.data.success) {
-          throw new Error(response.data.message || 'Login failed')
+          throw new Error(response.data.error || 'Login failed')
         }
+
+        localStorage.setItem('token', response.data.data.token)
+
+        emit('login-success', {
+          username: loginForm.username,
+          token: response.data.data.token,
+        })
 
         ElMessage.success('Login successful')
         dialogFormVisible.value = false
