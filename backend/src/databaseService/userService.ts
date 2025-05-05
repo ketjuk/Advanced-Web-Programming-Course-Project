@@ -104,7 +104,7 @@ export const deleteCommentToUser = async (userId: string, commentId: string) => 
 };
 
 //like article
-export const likeArticle = async (userId: string, articleId: string) => {
+export const likeArticleForUser = async (userId: string, articleId: string) => {
   return await User.findByIdAndUpdate(
     userId,
     { $addToSet: { likedArticles: articleId } },
@@ -113,7 +113,7 @@ export const likeArticle = async (userId: string, articleId: string) => {
 };
 
 //cancel like article
-export const unlikeArticle = async (userId: string, articleId: string) => {
+export const unlikeArticleForUser = async (userId: string, articleId: string) => {
   return await User.findByIdAndUpdate(
     userId,
     { $pull: { likedArticles: articleId } },

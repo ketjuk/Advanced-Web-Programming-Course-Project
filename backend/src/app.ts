@@ -1,4 +1,7 @@
+import connectDB from './db';
+
 import express, { RequestHandler } from 'express';
+
 //request
 import {  LoginBody, SignupBody, 
           CreateArticleBody, 
@@ -6,16 +9,16 @@ import {  LoginBody, SignupBody,
           CreateCommentBody, DeleteCommentBody, CreateReplyBody, 
           LikeArticlebody, UnlikeArticlebody, 
           SearchUserBody } from './types/request';
-import connectDB from './db';
 //user database
 import {  loginUser, signupUser, 
           createCode, checkCode, 
           findUserByUsername, findLoginInfoByToken, 
           addCommentToUser, deleteCommentToUser, getFollowingUsers, 
-          likeArticle, unlikeArticle } from './databaseService/userService';
+          likeArticleForUser, unlikeArticleForUser } from './databaseService/userService';
 //article database
 import {  articleExists, createArticle, getBrowseArticle, getPostDetail, 
           addComment, deleteCommentById, addSecondLevelComment,
+          likeArticle, unlikeArticle,
           getArticlesByUser, getUserComments } from './databaseService/articleService';
 //response
 import {  CodeResponse, LoginResponse, SignupResponse, 
@@ -28,6 +31,7 @@ const app = express();
 const port = 3000;
 app.use(express.json());
 app.use(require('cors')())
+
 //connect to Mongo database
 connectDB();
 
@@ -879,7 +883,9 @@ app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticlebody>,
     const user = await findUserByUsername(loginInfo.username);
     if (!user) throw new Error('User not found');
 
-    const article = await likeArticle(user._id.toString(), article_id);
+    const alternation_for_user = await likeArticleForUser(user._id.toString(), article_id);
+
+    const afternation_for_article = await likeArticle(article_id);
 
     const response: LikeArticleResponse = {
       success: true,
@@ -954,7 +960,9 @@ app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticlebo
     const user = await findUserByUsername(loginInfo.username);
     if (!user) throw new Error('User not found');
 
-    const article = await unlikeArticle(user._id.toString(), article_id);
+    const alternation_for_user = await unlikeArticleForUser(user._id.toString(), article_id);
+
+    const afternation_for_article = await unlikeArticle(article_id);
 
     const response: UnlikeArticleResponse = {
       success: true,

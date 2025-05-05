@@ -4,10 +4,12 @@ import Comment from '../databaseModel/createCommentTable';
 import User from '../databaseModel/createUserTable';
 import { SortOrder } from 'mongoose';
 
+//examine if the article exist
 export const articleExists = async (articleId: string): Promise<boolean> => {
   return await Article.exists({ _id: articleId }) !== null;
 };
 
+//create an article
 export const createArticle = async (title: string, category: string, content: string, authorId: string) => {
   const newPost = new Article({
     title,
@@ -21,6 +23,7 @@ export const createArticle = async (title: string, category: string, content: st
   return newPost;
 };
 
+//create a comment
 export const addComment = async (postId: string, userId: string, content: string) => {
   const post = await Article.findById(postId);
   if (!post) throw new Error('Article not found');
@@ -37,6 +40,7 @@ export const addComment = async (postId: string, userId: string, content: string
   return newComment;
 };
 
+//delete a comment (by _id)
 export const deleteCommentById = async (commentId: string, userId: string) => {
   const comment = await Comment.findById(commentId);
   if (!comment) throw new Error('Comment not found');
@@ -54,6 +58,7 @@ export const deleteCommentById = async (commentId: string, userId: string) => {
   return true;
 };
 
+//create a second level comment/reply
 export const addSecondLevelComment = async (commentId: string, userId: string, content: string) => {
   const comment = await Comment.findById(commentId);
   if (!comment) throw new Error('Comment not found');
@@ -70,6 +75,7 @@ export const addSecondLevelComment = async (commentId: string, userId: string, c
   return reply;
 };
 
+//browse articles
 export const getBrowseArticle = async (sortBy: 'time' | 'likes', start: number = 0, limit: number = 30, category?: string) => {
   const sortCondition: { [key: string]: SortOrder } = {};
   sortCondition[sortBy === 'time' ? 'createdAt' : 'likes'] = -1;
@@ -87,7 +93,7 @@ export const getBrowseArticle = async (sortBy: 'time' | 'likes', start: number =
     .populate('author', 'username image');//username and user image
 };
 
-
+//get a specific article
 export const getPostDetail = async (postId: string, currentUserId: string) => {
   const objectId = new mongoose.Types.ObjectId(postId);
 
@@ -175,3 +181,25 @@ export async function getUserComments(userId: string) {
   }));
 }
   
+//add like (+1) to the article
+export const likeArticle = async (article_id: string) => {
+  const updatedArticle = await Article.findByIdAndUpdate(
+    article_id,
+    { $inc: { likes: 1 } },
+    { new: true }
+  );
+};
+
+//decrease like (-1) to the article
+export const unlikeArticle = async (article_id: string) => {
+  const article = await Article.findById(article_id);
+  if (!article) {
+    throw new Error('Article not found');
+  }
+
+  const newLikes = Math.max(0, article.likes - 1);//prevent to be nagetive number of likes
+  article.likes = newLikes;
+
+  await article.save();
+  return article.likes;
+};
