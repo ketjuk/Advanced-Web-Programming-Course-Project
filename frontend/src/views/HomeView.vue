@@ -4,77 +4,105 @@ import ArticleWrapper from './homeComponent/ArticleWrapper.vue'
 import ArticleType from './homeComponent/ArticleType.vue'
 import { ElButton } from 'element-plus'
 import { API_GetCode, API_Login, API_Signup } from '@/api'
-
-const test = async () => {
-  try {
-    const data = await API_GetCode()
-    console.log(data)
-  } catch (error) {}
-}
-
-const test2 = async () => {
-  const data = await API_Login({ password: '123', username: '123' })
-  console.log(data)
-}
-const test3 = async () => {
-  try {
-    const data = await API_Signup()
-    console.log(data)
-  } catch (error) {}
-}
+import Sidebar from '@/components/Sidebar.vue'
 </script>
 
 <template>
-  <div class="wrapper">
-    <div class="header">header</div>
-    <div>
-      <ElButton type="primary" @click="test">test code</ElButton>
-      <ElButton type="primary" @click="test2">test login</ElButton>
-      <ElButton type="primary" @click="test3">test signup</ElButton>
+  <div class="main">
+    <div class="left">
+      <Sidebar />
     </div>
-    <div class="main">
-      <!-- <div class="left">left</div> -->
-      <div class="right">
-        <ArticleType />
-        <ArticleWrapper />
-      </div>
+    <div class="right">
+      <ArticleType />
+      <ArticleWrapper />
     </div>
   </div>
-  <div>123</div>
-  <Navbar msg="导航条" />
 </template>
 
 <style scoped>
-.wrapper {
-  width: 100%;
-  min-height: 100vh;
-  background-color: wheat;
-  display: flex;
-  flex-direction: column;
-}
-.header {
-  width: 100%;
-  height: 80px;
-  background-color: #ddd;
-}
 .main {
   display: flex;
-  min-height: 100vh;
-}
-/* .left{
-  position: sticky;
-  top: 0;
-  flex: 0 0 200px;
-  background-color: #bbb;
-} */
-.right {
-  margin-left: 200px;
+  flex-direction: row;
   flex: 1;
 }
 
+.right {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: 60px;
+}
+
+.left {
+  width: 200px;
+}
+
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background-color: #f4f4f4;
+  padding-top: 60px;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.el-menu {
+  width: 100%;
+  height: 100%;
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.more-item {
+  margin-top: auto;
+  text-align: center;
+}
+
 @media screen and (max-width: 850px) {
+  .main {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: 60px;
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    padding-top: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .el-menu {
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    justify-content: space-around;
+  }
+
+  .el-menu-item {
+    flex: 1;
+    height: 100%;
+    text-align: center;
+    line-height: 60px;
+  }
+
+  .more-item {
+    position: static !important;
+  }
+
   .right {
     margin-left: 0;
+    padding-bottom: 60px;
+  }
+
+  :deep(.el-menu-item:last-child) {
+    margin-right: 20px !important;
+    padding-right: 20px !important;
   }
 }
 </style>

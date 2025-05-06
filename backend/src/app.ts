@@ -1,16 +1,20 @@
-import express, { RequestHandler } from 'express';
-import { LoginBody, SignupBody } from './types/request';
-import connectDB from './db';
-import { loginUser, signupUser, createCode, checkCode } from './databaseService/userService';
-import { CodeResponse, LoginResponse, SignupResponse } from './types/response';
+import express, { RequestHandler } from "express";
+import { LoginBody, SignupBody } from "./types/request";
+import connectDB from "./db";
+import {
+  loginUser,
+  signupUser,
+  createCode,
+  checkCode,
+} from "./databaseService/userService";
+import { CodeResponse, LoginResponse, SignupResponse } from "./types/response";
 
 const app = express();
 const port = 3000;
 app.use(express.json());
-app.use(require('cors')())
+app.use(require("cors")());
 //connect to Mongo database
 connectDB();
-
 
 /*
   POST method
@@ -46,22 +50,32 @@ connectDB();
   }
 
 */
-app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: express.Response<LoginResponse>) => {
+app.post("/log_in", (async (
+  req: express.Request<{}, {}, LoginBody>,
+  res: express.Response<LoginResponse>
+) => {
   const { username, password, _id, code } = req.body;
 
   if (!username || !password) {
-    res.status(400).json({ success: false, error: 'username, password or id should not be blank' });
+    res.status(400).json({
+      success: false,
+      error: "username, password or id should not be blank",
+    });
     return;
   }
   if (!_id || !code) {
-    res.status(400).json({ success: false, error: '_id and code should not be blank' });
+    res
+      .status(400)
+      .json({ success: false, error: "_id and code should not be blank" });
     return;
   }
 
   try {
     await checkCode(_id, code);
     const result = await loginUser(username, password); //
-    res.status(200).json({ success: true, data: { message: 'login success', ...result } });
+    res
+      .status(200)
+      .json({ success: true, data: { message: "login success", ...result } });
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -69,7 +83,6 @@ app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: expres
     });
   }
 }) as RequestHandler);
-
 
 /*
   POST method
@@ -109,21 +122,31 @@ app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: expres
   }
 
 */
-app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: express.Response<SignupResponse>) => {
+app.post("/sign_up", (async (
+  req: express.Request<{}, {}, SignupBody>,
+  res: express.Response<SignupResponse>
+) => {
   const { username, password, _id, code } = req.body;
   if (!username || !password || !_id) {
-    res.status(400).json({ success: false, error: 'username and password should not be blank' });
+    res.status(400).json({
+      success: false,
+      error: "username and password should not be blank",
+    });
     return;
   }
   if (!_id || !code) {
-    res.status(400).json({ success: false, error: '_id and code should not be blank' });
+    res
+      .status(400)
+      .json({ success: false, error: "_id and code should not be blank" });
     return;
   }
 
   try {
     await checkCode(_id, code);
     const result = await signupUser(username, password);
-    res.status(200).json({ success: true, data: { message: 'signup success' } });
+    res
+      .status(200)
+      .json({ success: true, data: { message: "signup success" } });
   } catch (err) {
     res.status(401).json({
       success: false,
@@ -144,11 +167,13 @@ app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: expr
   }
 }
 */
-app.get('/request_code', (async (req: express.Request<{}, {}, {}>, res: express.Response<CodeResponse>) => {
+app.get("/request_code", (async (
+  req: express.Request<{}, {}, {}>,
+  res: express.Response<CodeResponse>
+) => {
   const code = await createCode();
   res.status(200).json({ success: true, data: { ...code } });
 }) as RequestHandler);
-
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

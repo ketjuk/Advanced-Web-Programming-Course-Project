@@ -144,6 +144,9 @@ onBeforeUnmount(() => {
   width: 100%;
   box-sizing: border-box;
   position: relative;
+  min-height: 100vh;
+  padding-left: 200px;
+  padding-left: 0;
 }
 .active-item {
   position: absolute;
