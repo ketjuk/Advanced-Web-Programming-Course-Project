@@ -65,10 +65,107 @@ export const checkCode = async(_id: string, code: string) => {
     throw new Error('Verification code is wrong');
   }
 
+  await VerificationCodeTable.findByIdAndDelete(_id);
+
   return true;
 }
+
+//get user detail by username
+export const findUserByUsername = async (username: string) => {
+  return await User.findOne({ username });
+};
+
+//get login detail by token
+export const findLoginInfoByToken = async (token: string) => {
+  return await LoginUser.findOne({ token });
+};
 
 //log out
 export const logoutUser = async (token: string) => {
   await LoginUser.deleteOne({ token });
+};
+
+//save user's comment
+export const addCommentToUser = async (userId: string, commentId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $push: { writtenComments: commentId } },
+    { new: true }
+  );
+};
+
+//unsave user's comment
+export const deleteCommentToUser = async (userId: string, commentId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $pull: { writtenComments: commentId } },
+    { new: true }
+  );
+};
+
+//like article
+export const likeArticleForUser = async (userId: string, articleId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { likedArticles: articleId } },
+    { new: true }
+  );
+};
+
+//cancel like article
+export const unlikeArticleForUser = async (userId: string, articleId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $pull: { likedArticles: articleId } },
+    { new: true }
+  );
+};
+
+//save article
+export const saveArticle = async (userId: string, articleId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { savedArticles: articleId } },
+    { new: true }
+  );
+};
+
+//unsave article
+export const unsaveArticle = async (userId: string, articleId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $pull: { savedArticles: articleId } },
+    { new: true }
+  );
+};
+
+
+//follow user
+export const followUser = async (userId: string, targetUserId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { following: targetUserId } },
+    { new: true }
+  );
+};
+
+//unfollow user
+export const unfollowUser = async (userId: string, targetUserId: string) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { $pull: { following: targetUserId } },
+    { new: true }
+  );
+};
+
+//specifically for getting the following list from an user
+export const getFollowingUsers = async (userIds: string[]) => {
+  const users = await User.find({ _id: { $in: userIds } })
+    .select('username image')
+    .lean();
+
+  return users.map(u => ({
+    username: u.username,
+    image: u.image || ''
+  }));
 };
