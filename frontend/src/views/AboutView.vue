@@ -22,11 +22,7 @@
         <span class="text-gray-500">-</span>
       </el-col>
       <el-col :span="11">
-        <el-time-picker
-          v-model="form.date2"
-          placeholder="Pick a time"
-          style="width: 100%"
-        />
+        <el-time-picker v-model="form.date2" placeholder="Pick a time" style="width: 100%" />
       </el-col>
     </el-form-item>
     <el-form-item label="Instant delivery">
@@ -34,18 +30,10 @@
     </el-form-item>
     <el-form-item label="Activity type">
       <el-checkbox-group v-model="form.type">
-        <el-checkbox value="Online activities" name="type">
-          Online activities
-        </el-checkbox>
-        <el-checkbox value="Promotion activities" name="type">
-          Promotion activities
-        </el-checkbox>
-        <el-checkbox value="Offline activities" name="type">
-          Offline activities
-        </el-checkbox>
-        <el-checkbox value="Simple brand exposure" name="type">
-          Simple brand exposure
-        </el-checkbox>
+        <el-checkbox value="Online activities" name="type"> Online activities </el-checkbox>
+        <el-checkbox value="Promotion activities" name="type"> Promotion activities </el-checkbox>
+        <el-checkbox value="Offline activities" name="type"> Offline activities </el-checkbox>
+        <el-checkbox value="Simple brand exposure" name="type"> Simple brand exposure </el-checkbox>
       </el-checkbox-group>
     </el-form-item>
     <el-form-item label="Resources">
@@ -62,11 +50,21 @@
       <el-button>Cancel</el-button>
     </el-form-item>
   </el-form>
+  <div @click="testLogin">just for test</div>
 </template>
 
 <script lang="ts" setup>
+import { API_Login } from '@/api'
 import { reactive } from 'vue'
-
+const testLogin = async () => {
+  const data = await API_Login({
+    username: '123',
+    password: '123',
+    _id: '123',
+    code: '123',
+  })
+  console.log('123',data)
+}
 // do not use same name with ref
 const form = reactive({
   name: '',
