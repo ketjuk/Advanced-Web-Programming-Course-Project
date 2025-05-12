@@ -2,20 +2,19 @@
   <div class="sidebar">
     <!-- 顶部菜单 -->
     <el-menu :default-active="active" class="menu-top" @select="handleSelect">
-      <el-menu-item index="1">
+      <el-menu-item index="/">
         <el-icon><Compass /></el-icon>
         <span>Discovery</span>
       </el-menu-item>
-      <el-menu-item index="2">
+      <el-menu-item index="/create">
         <el-icon><Edit /></el-icon>
         <span>Post</span>
       </el-menu-item>
-      <el-menu-item index="3">
+      <el-menu-item index="/notification">
         <el-icon><Bell /></el-icon>
         <span>Notification</span>
       </el-menu-item>
-      <!-- 只有在登录后才显示用户中心 -->
-      <el-menu-item index="4" v-if="isLoggedIn">
+      <el-menu-item index="/user" v-if="isLoggedIn">
         <el-icon><User /></el-icon>
         <span>User</span>
       </el-menu-item>
@@ -30,7 +29,7 @@
 
     <!-- 底部菜单 -->
     <el-menu class="menu-bottom" @select="handleSelect">
-      <el-menu-item index="5">
+      <el-menu-item index="/more">
         <el-icon><More /></el-icon>
         <span>More</span>
       </el-menu-item>
@@ -38,58 +37,55 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Compass, Edit, Bell, User, More } from '@element-plus/icons-vue'
 import Login from '@/components/Login.vue'
 import { ElMessage } from 'element-plus'
 
-const active = ref('1')
+const router = useRouter()
+const route = useRoute()
+
+const active = ref(route.path)
+watch(() => route.path, (newPath) => {
+  active.value = newPath
+})
+
 const isLoggedIn = ref(false)
 const loginRef = ref(null)
 const isMobileView = ref(false)
 
-// 检查用户登录状态
 const checkLoginStatus = () => {
-  // 从localStorage获取登录信息
   const token = localStorage.getItem('token')
   isLoggedIn.value = !!token
 }
 
-// 处理登录成功
-const handleLoginSuccess = (userData) => {
-  // 如果有 token 就保存，否则提示登录失败
+const handleLoginSuccess = (userData: { username: string; token: string }) => {
   if (userData.token) {
     localStorage.setItem('token', userData.token)
     localStorage.setItem('username', userData.username)
-
-    // 更新状态
     isLoggedIn.value = true
-
     ElMessage.success(`Welcome back, ${userData.username}!`)
   } else {
     ElMessage.error('Login failed: no token received.')
   }
 }
 
-// 检查是否为移动视图
 const checkViewport = () => {
   isMobileView.value = window.innerWidth <= 850
 }
 
-// 处理菜单项选择
 const handleSelect = (index: string) => {
-  active.value = index
+  router.push(index)
 }
 
-// 组件挂载时检查登录状态和视图大小
 onMounted(() => {
   checkLoginStatus()
   checkViewport()
   window.addEventListener('resize', checkViewport)
 })
 
-// 组件卸载时移除事件监听
 onUnmounted(() => {
   window.removeEventListener('resize', checkViewport)
 })
@@ -127,12 +123,10 @@ onUnmounted(() => {
   border-right: none;
 }
 
-/* 确保按钮样式一致 */
 .login-section :deep(.el-button) {
   width: 100%;
 }
 
-/* 移除Element Plus默认边框 */
 :deep(.el-menu) {
   border-right: none !important;
 }
@@ -181,12 +175,10 @@ onUnmounted(() => {
     font-size: 12px;
   }
 
-  /* 在移动视图中隐藏登录按钮 */
   .login-section {
     display: none;
   }
 
-  /* More菜单项右侧间距 */
   :deep(.el-menu-item:last-child) {
     margin-right: 10px !important;
   }

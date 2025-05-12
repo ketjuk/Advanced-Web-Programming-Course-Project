@@ -1,18 +1,18 @@
 * {
   margin: 0;
   padding: 0;
-  overflow: auto;
   scrollbar-width: none;
   /* Firefox */
   -ms-overflow-style: none;
+  overflow: hidden;
   /* IE */
 }
 *::-webkit-scrollbar {
   display: none;
   /* Chrome / Safari */
 }
-body{
-  overflow: hidden;
+html,body{
+  overflow: auto;
 }
 img {
   width: 100%;

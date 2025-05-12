@@ -5,16 +5,25 @@ import ArticleType from './homeComponent/ArticleType.vue'
 import { ElButton } from 'element-plus'
 import { API_GetCode, API_Login, API_Signup } from '@/api'
 import Sidebar from '@/components/Sidebar.vue'
+
+const test = async () => {
+ 
+  const res = await API_Login({ username: 'test', password: 'test' })
+  console.log(res)
+  // const res = await API_Signup({ username: 'test', password: 'test' })
+  // console.log(res)
+}
 </script>
 
 <template>
   <div class="main">
+
     <div class="left">
       <Sidebar />
     </div>
     <div class="right">
-      <ArticleType />
-      <ArticleWrapper />
+      <!-- <ElButton @click="test">test</ElButton> -->
+      <router-view />
     </div>
   </div>
 </template>
@@ -28,8 +37,9 @@ import Sidebar from '@/components/Sidebar.vue'
 
 .right {
   flex: 1;
-  padding: 16px;
+  padding: 2px 16px;
   padding-bottom: 60px;
+ 
 }
 
 .left {
