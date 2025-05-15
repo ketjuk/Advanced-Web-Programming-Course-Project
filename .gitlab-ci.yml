@@ -1,4 +1,4 @@
-image: docker.io/library/node:18
+image: node:18-bullseye
 
 stages:
   - deploy
@@ -17,10 +17,10 @@ deploy_backend:
   script:
     - |
       ssh ec2-user@51.20.184.18 << 'EOF'
-      cd ~/web/backend
-      git pull origin Yi
-      yarn install
-      yarn build
-      pkill -f "ts-node" || true
-      nohup npm run dev > backend.log 2>&1 &
+        cd ~/web/backend
+        git pull origin Yi
+        yarn install
+        yarn build
+        pkill -f "ts-node" || true
+        nohup npm run dev > backend.log 2>&1 &
       EOF
