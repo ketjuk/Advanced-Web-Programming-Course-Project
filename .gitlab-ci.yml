@@ -18,7 +18,7 @@ deploy_backend:
   script:
     - |
       ssh ec2-user@51.20.184.18 << 'EOF'
-        cd ~/web/backend
+        cd ~/tddd27_2025_web/backend
         git pull origin Yi
         yarn install
         yarn build
