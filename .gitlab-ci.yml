@@ -3,7 +3,6 @@ image: node:18-bullseye
 stages:
   - deploy
 
-
 deploy_backend:
   stage: deploy
   only:

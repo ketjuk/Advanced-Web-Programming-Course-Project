@@ -167,6 +167,13 @@ export async function getArticlesByUser(ids: string[]) {
   }));
 }
 
+export const getUserArticles = async (userId: string) => {
+  return await Article.find({ author: userId })
+    .select('_id title createdAt')
+    .sort({ createdAt: -1 }); // time reverse
+};
+
+
 //specifically for getting all the comments from an user
 export async function getUserComments(userId: string) {
   const comments = await Comment.find({ author: userId })

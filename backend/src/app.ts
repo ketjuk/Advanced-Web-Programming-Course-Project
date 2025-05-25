@@ -19,11 +19,11 @@ import {  loginUser, signupUser,
 import {  articleExists, createArticle, getBrowseArticle, getPostDetail, 
           addComment, deleteCommentById, addSecondLevelComment,
           likeArticle, unlikeArticle,
-          getArticlesByUser, getUserComments } from './databaseService/articleService';
+          getArticlesByUser, getUserArticles, getUserComments } from './databaseService/articleService';
 //response
 import {  CodeResponse, LoginResponse, SignupResponse, 
           CreateCommentResponse, DeleteCommentResponse, CommentReplyResponse, 
-          CreateArticleResponse, BrowseArticlesResponse, ArticleDetailResponse, 
+          CreateArticleResponse, BrowseArticlesResponse, ArticleDetailResponse, getUsersArticlesResponse,
           LikeArticleResponse, UnlikeArticleResponse,
           SearchUserResponse } from './types/response';
 
@@ -819,6 +819,40 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
   }
   catch(error) {
     res.status(401).json({ error: (error as Error).message });
+  }
+}) as RequestHandler);
+
+
+app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: express.Response<getUsersArticlesResponse>) => {
+  const token = req.header('Authentication');
+  if (!token) {
+    res.status(400).json({ success: false, error: 'Missing token' });
+    return;
+  }
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error('Cannot find user information');
+
+    const articles = await getUserArticles(user._id.toString());
+
+    const response: getUsersArticlesResponse = {
+      success: true,
+      data: {
+        articles: articles.map(article => ({
+          article_id: article._id.toString(),
+          title: article.title,
+          createdAt: article.createdAt.toISOString(),
+        })),
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(401).json({ success: false, error: (error as Error).message });
   }
 }) as RequestHandler);
 
