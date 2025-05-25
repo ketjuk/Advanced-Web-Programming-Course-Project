@@ -823,6 +823,54 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
 }) as RequestHandler);
 
 
+/*
+  GET method
+  request with /get_user_articles
+  header:
+  Authentication: <token>
+
+  if success, return with 200 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "articles": [
+        {
+          "article_id": "6812251120cbc77f8a604be3",
+          "title": "test article",
+          "createdAt": "2025-04-30T13:26:41.639Z"
+        },
+        {
+          "article_id": "681224058cb26ccf73a1b4ec",
+          "title": "test article",
+          "createdAt": "2025-04-30T13:22:13.667Z"
+        }
+      ]
+    }
+  }
+
+  if the article is empty, return with 200 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "articles": []
+    }
+  }
+
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+*/
 app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: express.Response<getUsersArticlesResponse>) => {
   const token = req.header('Authentication');
   if (!token) {
