@@ -42,7 +42,7 @@ app.use(require("cors")());
 //connect to Mongo database
 connectDB();
 // Enable static access to "upload" directory
-app.use('/upload', express.static(path.resolve(__dirname, '../upload')));
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 /*
   POST method
@@ -735,12 +735,12 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
           author: {
             username: (article.author as any).username,
             //todo:real image url
-            image: `http://localhost:3000/upload/${Math.floor(Math.random() * 8) + 1}.jpg`,
+            image: `http://localhost:3000/uploads/${Math.floor(Math.random() * 8) + 1}.jpg`,
           },
           likes: article.likes,
           createdAt: article.createdAt.toISOString(),
           image: article.image ||
-            `http://localhost:3000/upload/${Math.floor(Math.random() * 8) + 1}.jpg`,
+            `http://localhost:3000/uploads/${Math.floor(Math.random() * 8) + 1}.jpg`,
         })),
       },
     };
@@ -1116,6 +1116,11 @@ app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticleBo
     "error": "Missing token"
   }
 
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
   if file is unattached or uploaded with wrong format, return with 400 status code and a json message:
   {
     "error": "Missing file"
@@ -1143,10 +1148,49 @@ app.post('/upload_file', upload.single('file'), (async (req: UploadFileBody, res
 }) as RequestHandler);
 
 
+/*
+  DELETE method
+  request with /delete_file
+  header:
+  Authentication: <token>
+  body:
+  {
+    "file_url": <1.jpg>
+  }
 
+  if success, return with 200 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "Successfully deleted the file"
+    }
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if file_url is blank, return with 404 status code and a json message:
+  {
+    "error": "File name is missing"
+  }
+
+  if the file does not exist, return with 404 status code and a json message:
+  {
+    "success": false,
+    "error": "File does not exist"
+  }
+*/
 app.delete('/delete_file', (async (req: express.Request<{}, {}, DeleteFileBody>, res: express.Response<DeleteFileRessponse | { error: string }>) => {
   const token = req.header('Authentication');
-  let {file_url} = req.body;
+  let { file_url } = req.body;
+
   if (!token) {
     res.status(400).json({ error: 'Missing token' });
     return;
@@ -1156,19 +1200,35 @@ app.delete('/delete_file', (async (req: express.Request<{}, {}, DeleteFileBody>,
     res.status(400).json({ success: false, error: 'Invalid token' });
     return;
   }
-  if (file_url) {
-    file_url = "/uploads/" + file_url;
-    fs.unlinkSync(file_url);
+  if (!file_url) {
+    res.status(404).json({ success: false, error: 'File name is missing' });
+    return;
+  }
+
+  const absolutePath = path.resolve(__dirname, '..', 'uploads', file_url);
+
+  try {
+    if (!fs.existsSync(absolutePath)) {
+      res.status(404).json({ success: false, error: 'File does not exist' });
+      return;
+    }
+
+    fs.unlinkSync(absolutePath);// if the file is exist
+
     const response: DeleteFileRessponse = {
       success: true,
       data: {
-        message: "Successfully deleted the file",
+        message: 'Successfully deleted the file',
       },
     };
+    res.status(200).json(response);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: (err as Error).message,
+    });
   }
-  else res.status(404).json({ success: false, error: 'File does not exist' });
 }) as RequestHandler);
-
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
