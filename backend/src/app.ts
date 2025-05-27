@@ -3,18 +3,22 @@ import connectDB from './db';
 import express, { RequestHandler } from 'express';
 
 //request
-import {  LoginBody, SignupBody, 
-          CreateArticleBody, 
-          BrowseArticleBody, ArticleDetailBody, 
-          CreateCommentBody, DeleteCommentBody, CreateReplyBody, 
-          LikeArticlebody, UnlikeArticlebody, 
-          SearchUserBody } from './types/request';
+import {
+  LoginBody, SignupBody,
+  CreateArticleBody,
+  BrowseArticleBody, ArticleDetailBody,
+  CreateCommentBody, DeleteCommentBody, CreateReplyBody,
+  LikeArticlebody, UnlikeArticlebody,
+  SearchUserBody
+} from './types/request';
 //user database
-import {  loginUser, signupUser, 
-          createCode, checkCode, 
-          findUserByUsername, findLoginInfoByToken, 
-          addCommentToUser, deleteCommentToUser, getFollowingUsers, 
-          likeArticleForUser, unlikeArticleForUser } from './databaseService/userService';
+import {
+  loginUser, signupUser,
+  createCode, checkCode,
+  findUserByUsername, findLoginInfoByToken,
+  addCommentToUser, deleteCommentToUser, getFollowingUsers,
+  likeArticleForUser, unlikeArticleForUser
+} from './databaseService/userService';
 //article database
 import {  articleExists, createArticle, getBrowseArticle, getPostDetail, 
           addComment, deleteCommentById, addSecondLevelComment,
@@ -26,15 +30,15 @@ import {  CodeResponse, LoginResponse, SignupResponse,
           CreateArticleResponse, BrowseArticlesResponse, ArticleDetailResponse, getUsersArticlesResponse,
           LikeArticleResponse, UnlikeArticleResponse,
           SearchUserResponse } from './types/response';
-
+import path from 'path';
 const app = express();
 const port = 3000;
 app.use(express.json());
-app.use(require('cors')())
-
+app.use(require("cors")());
 //connect to Mongo database
 connectDB();
-
+// Enable static access to "upload" directory
+app.use('/upload', express.static(path.resolve(__dirname, '../upload')));
 
 /*
   POST method
@@ -70,22 +74,32 @@ connectDB();
   }
 
 */
-app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: express.Response<LoginResponse>) => {
+app.post("/log_in", (async (
+  req: express.Request<{}, {}, LoginBody>,
+  res: express.Response<LoginResponse>
+) => {
   const { username, password, _id, code } = req.body;
 
   if (!username || !password) {
-    res.status(400).json({ success: false, error: 'username, password or id should not be blank' });
+    res.status(400).json({
+      success: false,
+      error: "username, password or id should not be blank",
+    });
     return;
   }
   if (!_id || !code) {
-    res.status(400).json({ success: false, error: '_id and code should not be blank' });
+    res
+      .status(400)
+      .json({ success: false, error: "_id and code should not be blank" });
     return;
   }
 
   try {
     await checkCode(_id, code);
     const result = await loginUser(username, password); //
-    res.status(200).json({ success: true, data: { message: 'login success', ...result } });
+    res
+      .status(200)
+      .json({ success: true, data: { message: "login success", ...result } });
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -93,7 +107,6 @@ app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: expres
     });
   }
 }) as RequestHandler);
-
 
 /*
   POST method
@@ -133,21 +146,31 @@ app.post('/log_in', (async (req: express.Request<{}, {}, LoginBody>, res: expres
   }
 
 */
-app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: express.Response<SignupResponse>) => {
+app.post("/sign_up", (async (
+  req: express.Request<{}, {}, SignupBody>,
+  res: express.Response<SignupResponse>
+) => {
   const { username, password, _id, code } = req.body;
   if (!username || !password || !_id) {
-    res.status(400).json({ success: false, error: 'username and password should not be blank' });
+    res.status(400).json({
+      success: false,
+      error: "username and password should not be blank",
+    });
     return;
   }
   if (!_id || !code) {
-    res.status(400).json({ success: false, error: '_id and code should not be blank' });
+    res
+      .status(400)
+      .json({ success: false, error: "_id and code should not be blank" });
     return;
   }
 
   try {
     await checkCode(_id, code);
     const result = await signupUser(username, password);
-    res.status(200).json({ success: true, data: { message: 'signup success' } });
+    res
+      .status(200)
+      .json({ success: true, data: { message: "signup success" } });
   } catch (err) {
     res.status(401).json({
       success: false,
@@ -168,11 +191,13 @@ app.post('/sign_up', (async (req: express.Request<{}, {}, SignupBody>, res: expr
   }
 }
 */
-app.get('/request_code', (async (req: express.Request<{}, {}, {}>, res: express.Response<CodeResponse>) => {
+app.get("/request_code", (async (
+  req: express.Request<{}, {}, {}>,
+  res: express.Response<CodeResponse>
+) => {
   const code = await createCode();
   res.status(200).json({ success: true, data: { ...code } });
 }) as RequestHandler);
-
 
 /*
   POST method
@@ -236,15 +261,15 @@ app.post('/create_article', (async (req: express.Request<{}, {}, CreateArticleBo
     const response: CreateArticleResponse = {
       success: true,
       data: {
-        article_id : article._id.toString(),
+        article_id: article._id.toString(),
         title: article.title,
-        category: article.category?? '',
-        content: article.content?? '',
+        category: article.category ?? '',
+        content: article.content ?? '',
         author: user.username,
         likes: article.likes,
         comments: [],
       },
-    };    
+    };
 
     res.status(201).json(response);
   } catch (err) {
@@ -311,7 +336,7 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
     return;
   }
 
-  const {article_id, content} = req.body;
+  const { article_id, content } = req.body;
   if (!article_id) {
     res.status(400).json({ error: 'Missing article id' });
     return;
@@ -328,19 +353,19 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
     const user = await findUserByUsername(loginInfo.username);
     if (!user) throw new Error('User not found');
 
-    const comment = await addComment(article_id, user._id.toString(),content);
+    const comment = await addComment(article_id, user._id.toString(), content);
 
     const update = await addCommentToUser(user._id.toString(), comment._id.toString());
 
     const response: CreateCommentResponse = {
       success: true,
       data: {
-        article_id : comment._id.toString(),
+        article_id: comment._id.toString(),
         author: user.username,
-        content: comment.content?? '',
+        content: comment.content ?? '',
         replies: [],
       },
-    };    
+    };
 
     res.status(201).json(response);
   } catch (err) {
@@ -396,7 +421,7 @@ app.post('/delete_comment', (async (req: express.Request<{}, {}, DeleteCommentBo
     res.status(400).json({ error: 'Missing token' });
     return;
   }
-  const {comment_id} = req.body;
+  const { comment_id } = req.body;
   if (!comment_id) {
     res.status(400).json({ error: 'Missing comment id' });
     return;
@@ -418,7 +443,7 @@ app.post('/delete_comment', (async (req: express.Request<{}, {}, DeleteCommentBo
       data: {
         message: "successfully deleted the comment",
       },
-    };    
+    };
 
     res.status(201).json(response);
   } catch (err) {
@@ -595,8 +620,8 @@ app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, r
   const token = req.header('Authentication');
   if (!token) return res.status(400).json({ error: 'Missing token' });
 
-  const {username} = req.body;
-  if(!username) return res.status(400).json({ error: 'Missing username' });
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Missing username' });
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
@@ -681,18 +706,19 @@ app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, r
   }
 */
 app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBody>, res: express.Response<BrowseArticlesResponse | { error: string }>) => {
-  const token = req.header('Authentication');
-  let {sort_by, start, limit, category} = req.body;
-  if (!token) {
-    res.status(400).json({ error: 'Missing token' });
-    return;
-  }
+  // TODO: fix, no token and use get method instead of post method
+  // const token = req.header('Authentication');
+  let { sort_by, start, limit, category } = req.body;
+  // if (!token) {
+  //   res.status(400).json({ error: 'Missing token' });
+  //   return;
+  // }
   if (sort_by !== 'time' && sort_by !== 'likes') {
     sort_by = 'time';
   }
   try {
-    const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    // const loginInfo = await findLoginInfoByToken(token);
+    // if (!loginInfo) throw new Error('Invalid token');
 
     const articles = await getBrowseArticle(sort_by, start, limit, category);
 
@@ -700,14 +726,17 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
       success: true,
       data: {
         articles: articles.map(article => ({
-          article_id : article._id.toString(),
-          title      : article.title,
-          author     : {
+          article_id: article._id.toString(),
+          title: article.title,
+          author: {
             username: (article.author as any).username,
-            image: (article.author as any).image,
+            //todo:real image url
+            image: `http://localhost:3000/upload/${Math.floor(Math.random() * 8) + 1}.jpg`,
           },
-          likes      : article.likes,
-          createdAt  : article.createdAt.toISOString(),
+          likes: article.likes,
+          createdAt: article.createdAt.toISOString(),
+          image: article.image ||
+            `http://localhost:3000/upload/${Math.floor(Math.random() * 8) + 1}.jpg`,
         })),
       },
     };
@@ -782,7 +811,7 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
 */
 app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBody>, res: express.Response<ArticleDetailResponse | { error: string }>) => {
   const token = req.header('Authentication');
-  const {article_id} = req.body;
+  const { article_id } = req.body;
   if (!token) {
     res.status(400).json({ error: 'Missing token' });
     return;
@@ -794,7 +823,7 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
     if (!user) throw new Error('Cannot find user information');
 
     const article = await getPostDetail(article_id, user._id.toString());
-    if(!article) throw new Error('Article not exist');
+    if (!article) throw new Error('Article not exist');
 
     const response: ArticleDetailResponse = {
       success: true,
@@ -808,16 +837,18 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
           },
           likes: article.likes,
           createdAt: article.createdAt.toISOString(),
+          image: article.image ||
+          `http://localhost:3000/upload/${Math.floor(Math.random() * 8) + 1}.jpg`,
         },
         liked: article.liked,
         collected: article.collected,
         comments: article.comments,
       },
     };
-    
+
     res.status(201).json(response);
   }
-  catch(error) {
+  catch (error) {
     res.status(401).json({ error: (error as Error).message });
   }
 }) as RequestHandler);
@@ -945,7 +976,7 @@ app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: exp
 */
 app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticlebody>, res: express.Response<LikeArticleResponse | { error: string }>) => {
   const token = req.header('Authentication');
-  let {article_id} = req.body;
+  let { article_id } = req.body;
   if (!token) {
     res.status(400).json({ error: 'Missing token' });
     return;
@@ -1022,7 +1053,7 @@ app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticlebody>,
 */
 app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticlebody>, res: express.Response<UnlikeArticleResponse | { error: string }>) => {
   const token = req.header('Authentication');
-  let {article_id} = req.body;
+  let { article_id } = req.body;
   if (!token) {
     res.status(400).json({ error: 'Missing token' });
     return;

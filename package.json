@@ -14,5 +14,8 @@
     "*.ts": "eslint --fix",
     "*.js": "eslint --fix",
     "*.{json,md}": "prettier --write"
+  },
+  "dependencies": {
+    "element-plus": "^2.9.9"
   }
 }
