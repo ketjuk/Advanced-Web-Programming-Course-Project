@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-import type { LoginBody, SignupBody } from '../../../backend/src/types/request';
-import type { APIResponse, CodeResponse, LoginResponse, SignupResponse } from '../../../backend/src/types/response';
+
+import type { BrowseArticleBody ,CreateArticleBody,LoginBody, SignupBody } from '../../../backend/src/types/request';
+import type {BrowseArticlesResponse,CreateArticleResponse, APIResponse, CodeResponse, LoginResponse, SignupResponse } from '../../../backend/src/types/response';
 const API_URL = 'http://127.0.0.1:3000/';
 
 
@@ -29,7 +30,13 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers['Authentication'] = token;
+  }
+  return logRequest(config);
+}, logError);
 // Add request/response logging
 api.interceptors.request.use(logRequest, logError);
 api.interceptors.response.use(logResponse, logError);
@@ -38,8 +45,6 @@ export const API_Login = async (data: LoginBody): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/log_in', data);
   console.log('Login response:', response);
   return response.data
-
-
 };
 
 export const API_Signup = async (data: SignupBody): Promise<SignupResponse> => {
@@ -50,3 +55,15 @@ export const API_GetCode = async (): Promise<CodeResponse> => {
   const response = await api.get<CodeResponse>('/request_code');
   return response.data;
 }
+
+export const API_CreateArticle = async (data: CreateArticleBody): Promise<CreateArticleResponse> => {
+  const response = await api.post<CreateArticleResponse>('/create_article', data);
+  return response.data;
+};
+
+export const API_BrowseArticle = async (
+  body: BrowseArticleBody
+): Promise<BrowseArticlesResponse> => {
+  const response = await api.post<BrowseArticlesResponse>('/browse_article', body);
+  return response.data;
+};

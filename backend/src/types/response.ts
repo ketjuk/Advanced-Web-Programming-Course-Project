@@ -50,6 +50,7 @@ export interface BrowseArticleRes {//single article
   };
   likes           : number;
   createdAt       : string;
+  image         : string;
 }
 
 export interface BrowseArticlesRes {//return several articles browsing
