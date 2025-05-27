@@ -1147,7 +1147,6 @@ app.post('/upload_file', upload.single('file'), (async (req: UploadFileBody, res
   res.status(200).json({ success: true, data: { file_url : "/uploads/" + req.file.filename} });
 }) as RequestHandler);
 
-
 /*
   DELETE method
   request with /delete_file
