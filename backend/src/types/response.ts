@@ -1,3 +1,4 @@
+
 export type APIResponse<T> = {
   success         : boolean;
   data?           : T;
@@ -130,6 +131,14 @@ export interface UnlikeArticleRes {
   message         : string;
 }
 
+export interface UploadFileRes {
+  file_url        : string;
+}
+
+export interface DeleteFileRes {
+  message         : string;
+}
+
 
 export type SignupResponse              = APIResponse<SignupRes>;
 export type LoginResponse               = APIResponse<LoginRes>;
@@ -144,3 +153,5 @@ export type getUsersArticlesResponse    = APIResponse<getUsersArticlesRes>;
 export type SearchUserResponse          = APIResponse<SearchUserRes>;
 export type LikeArticleResponse         = APIResponse<LikeArticleRes>;
 export type UnlikeArticleResponse       = APIResponse<UnlikeArticleRes>;
+export type UploadFileResponse          = APIResponse<UploadFileRes>;
+export type DeleteFileRessponse          = APIResponse<DeleteFileRes>;

@@ -1,3 +1,5 @@
+import type { Request } from 'express';
+
 export interface LoginBody {
   username    : string;
   password    : string;
@@ -47,10 +49,18 @@ export interface SearchUserBody {
   username    : string;
 }
 
-export interface LikeArticlebody {
+export interface LikeArticleBody {
   article_id  : string;
 }
 
-export interface UnlikeArticlebody {
+export interface UnlikeArticleBody {
   article_id  : string;
+}
+
+export type UploadFileBody = Request<{}, {}, any> & {
+  file        : Express.Multer.File;
+};
+
+export interface DeleteFileBody {
+  file_url    : string;
 }

@@ -2,13 +2,16 @@ import connectDB from './db';
 
 import express, { RequestHandler } from 'express';
 
+import { upload } from './uploadMiddleware';
+
 //request
 import {  LoginBody, SignupBody, 
           CreateArticleBody, 
           BrowseArticleBody, ArticleDetailBody, 
           CreateCommentBody, DeleteCommentBody, CreateReplyBody, 
-          LikeArticlebody, UnlikeArticlebody, 
-          SearchUserBody } from './types/request';
+          LikeArticleBody, UnlikeArticleBody, 
+          SearchUserBody,
+          UploadFileBody, DeleteFileBody } from './types/request';
 //user database
 import {  loginUser, signupUser, 
           createCode, checkCode, 
@@ -25,10 +28,13 @@ import {  CodeResponse, LoginResponse, SignupResponse,
           CreateCommentResponse, DeleteCommentResponse, CommentReplyResponse, 
           CreateArticleResponse, BrowseArticlesResponse, ArticleDetailResponse, getUsersArticlesResponse,
           LikeArticleResponse, UnlikeArticleResponse,
-          SearchUserResponse } from './types/response';
+          SearchUserResponse,
+          UploadFileResponse, DeleteFileRessponse } from './types/response';
 
 const app = express();
 const port = 3000;
+const fs = require('fs');
+
 app.use(express.json());
 app.use(require('cors')())
 
@@ -943,7 +949,7 @@ app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: exp
     "error": "Article not found"
   }
 */
-app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticlebody>, res: express.Response<LikeArticleResponse | { error: string }>) => {
+app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticleBody>, res: express.Response<LikeArticleResponse | { error: string }>) => {
   const token = req.header('Authentication');
   let {article_id} = req.body;
   if (!token) {
@@ -1020,7 +1026,7 @@ app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticlebody>,
     "error": "Article not found"
   }
 */
-app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticlebody>, res: express.Response<UnlikeArticleResponse | { error: string }>) => {
+app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticleBody>, res: express.Response<UnlikeArticleResponse | { error: string }>) => {
   const token = req.header('Authentication');
   let {article_id} = req.body;
   if (!token) {
@@ -1059,6 +1065,80 @@ app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticlebo
   }
 }) as RequestHandler);
 
+
+/*
+  POST method
+  request with /upload_file
+  header:
+  Authentication: <token>
+  body(form format):
+    "file": <attached file>
+
+  if success, return with 200 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "file_url": "/upload/1748358637888-.jpg"
+    }
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if file is unattached or uploaded with wrong format, return with 400 status code and a json message:
+  {
+    "error": "Missing file"
+  }
+*/
+app.post('/upload_file', upload.single('file'), (async (req: UploadFileBody, res: express.Response<UploadFileResponse>) => {
+  const token = req.header('Authentication');
+  if (!token) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    res.status(400).json({ success: false, error: 'Missing token' });// if it does not have authentication, then delete the file 
+    return;
+  }
+  const loginInfo = await findLoginInfoByToken(token);
+  if (!loginInfo) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    res.status(400).json({ success: false, error: 'Invalid token' });
+    return;
+  }
+  if (!req.file) {
+    res.status(400).json({ success: false, error: 'Missing file' });
+    return;
+  }
+
+  res.status(200).json({ success: true, data: { file_url : "/uploads/" + req.file.filename} });
+}) as RequestHandler);
+
+
+
+app.delete('/delete_file', (async (req: express.Request<{}, {}, DeleteFileBody>, res: express.Response<DeleteFileRessponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  let {file_url} = req.body;
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
+    return;
+  }
+  const loginInfo = await findLoginInfoByToken(token);
+  if (!loginInfo) {
+    res.status(400).json({ success: false, error: 'Invalid token' });
+    return;
+  }
+  if (file_url) {
+    file_url = "/uploads/" + file_url;
+    fs.unlinkSync(file_url);
+    const response: DeleteFileRessponse = {
+      success: true,
+      data: {
+        message: "Successfully deleted the file",
+      },
+    };
+  }
+  else res.status(404).json({ success: false, error: 'File does not exist' });
+}) as RequestHandler);
 
 
 app.listen(port, () => {
