@@ -47,6 +47,19 @@ export const getUsernameWithToken = async (token: string) => {
   return username;
 };
 
+export const changeUserImage = async (token: string, image: string) => {
+  const loginInfo = await findLoginInfoByToken(token);
+  if (!loginInfo) throw new Error('Invalid token');
+
+  const user = await User.findOne({ username: loginInfo.username });
+  if (!user) throw new Error('User not found');
+
+  user.image = image;
+  await user.save();
+
+  return true;
+};
+
 //create a verification code record, and return
 export const createCode = async () => {
   const code = generateCode();

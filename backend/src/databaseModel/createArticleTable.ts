@@ -8,7 +8,7 @@ const ArticleTable = new mongoose.Schema({
   likes: { type: Number, default: 0 },
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
-  image: { type: String, default: '' },
+  image: { type: [String], default: [] },
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]//comments are array
 });
 

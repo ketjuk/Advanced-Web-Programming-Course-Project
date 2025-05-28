@@ -7,6 +7,10 @@ export interface LoginBody {
   code        : string;
 }
   
+export interface ChangeUserImageBody {
+  image       : string;
+}
+
 export interface SignupBody {
   username    : string;
   password    : string;
@@ -18,6 +22,7 @@ export interface CreateArticleBody {
   title       : string;
   category    : string;
   content     : string;
+  image       : string[];
 }
 
 export interface CreateCommentBody {

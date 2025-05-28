@@ -15,6 +15,10 @@ export interface LoginRes {
   token           : string;
 }
 
+export interface ChangeUserImageRes {
+  message         : string;
+}
+
 export interface CodeRes {
   _id             : string;
   code            : string;
@@ -25,6 +29,7 @@ export interface CreateArticleRes {
   title           : string;
   category?       : string;
   content?        : string;
+  image?          : string[];
   author          : string;
   likes           : number;
   comments        : never[];
@@ -50,7 +55,7 @@ export interface BrowseArticleRes {//single article
   };
   likes           : number;
   createdAt       : string;
-  image           : string;
+  image           : string[];
 }
 
 export interface BrowseArticlesRes {//return several articles browsing
@@ -143,6 +148,7 @@ export interface DeleteFileRes {
 
 export type SignupResponse              = APIResponse<SignupRes>;
 export type LoginResponse               = APIResponse<LoginRes>;
+export type ChangeUserImageResponse     = APIResponse<ChangeUserImageRes>;
 export type CodeResponse                = APIResponse<CodeRes>;
 export type CreateArticleResponse       = APIResponse<CreateArticleRes>;
 export type CreateCommentResponse       = APIResponse<CreateCommentRes>;
