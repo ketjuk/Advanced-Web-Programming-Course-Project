@@ -1,0 +1,26 @@
+image: node:18-bullseye
+
+stages:
+  - deploy
+
+deploy_backend:
+  stage: deploy
+  only:
+    - Yi
+  before_script:
+    - apt-get update && apt-get install -y openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H gitlab.liu.se >> ~/.ssh/known_hosts
+    - ssh-keyscan -H 51.20.184.18 >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh ec2-user@51.20.184.18 << 'EOF'
+        cd ~/tddd27_2025_web/backend
+        git pull origin Yi
+        yarn install
+        yarn build
+        pkill -f "ts-node" || true
+        nohup npm run dev > backend.log 2>&1 &
+      EOF

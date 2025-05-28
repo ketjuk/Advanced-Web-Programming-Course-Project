@@ -56,6 +56,14 @@ export interface BrowseArticlesRes {//return several articles browsing
   articles        : BrowseArticleRes[];
 }
 
+export interface getUsersArticlesRes {//return the articles published by specific author
+  articles: {
+    article_id: string;
+    title: string;
+    createdAt: string;
+  }[];
+}
+
 export interface CommentReplyRes {//second level comment
   _id             : string;
   content         : string;
@@ -124,15 +132,16 @@ export interface UnlikeArticleRes {
 }
 
 
-export type SignupResponse          = APIResponse<SignupRes>;
-export type LoginResponse           = APIResponse<LoginRes>;
-export type CodeResponse            = APIResponse<CodeRes>;
-export type CreateArticleResponse   = APIResponse<CreateArticleRes>;
-export type CreateCommentResponse   = APIResponse<CreateCommentRes>;
-export type DeleteCommentResponse   = APIResponse<DeleteCommentRes>;
-export type CommentReplyResponse    = APIResponse<CommentReplyRes>;
-export type BrowseArticlesResponse  = APIResponse<BrowseArticlesRes>;
-export type ArticleDetailResponse   = APIResponse<ArticleDetailRes>;
-export type SearchUserResponse      = APIResponse<SearchUserRes>;
-export type LikeArticleResponse     = APIResponse<LikeArticleRes>;
-export type UnlikeArticleResponse   = APIResponse<UnlikeArticleRes>;
+export type SignupResponse              = APIResponse<SignupRes>;
+export type LoginResponse               = APIResponse<LoginRes>;
+export type CodeResponse                = APIResponse<CodeRes>;
+export type CreateArticleResponse       = APIResponse<CreateArticleRes>;
+export type CreateCommentResponse       = APIResponse<CreateCommentRes>;
+export type DeleteCommentResponse       = APIResponse<DeleteCommentRes>;
+export type CommentReplyResponse        = APIResponse<CommentReplyRes>;
+export type BrowseArticlesResponse      = APIResponse<BrowseArticlesRes>;
+export type ArticleDetailResponse       = APIResponse<ArticleDetailRes>;
+export type getUsersArticlesResponse    = APIResponse<getUsersArticlesRes>;
+export type SearchUserResponse          = APIResponse<SearchUserRes>;
+export type LikeArticleResponse         = APIResponse<LikeArticleRes>;
+export type UnlikeArticleResponse       = APIResponse<UnlikeArticleRes>;
