@@ -1,9 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '@/views/HomeView.vue';
-import ArticleHome from '@/views/homeComponent/ArticleHome.vue';
-import CreateArticleView from '@/views/CreateArticleView.vue';
-import NotificationView from '@/views/NotificationView.vue';
-import UserView from '@/views/UserView.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '@/views/HomeView.vue'
+import ArticleHome from '@/views/homeComponent/ArticleHome.vue'
+import CreateArticleView from '@/views/CreateArticleView.vue'
+import NotificationView from '@/views/NotificationView.vue'
+import UserView from '@/views/User.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +36,6 @@ const router = createRouter({
       ],
     },
   ],
-});
+})
 
-export default router;
+export default router
