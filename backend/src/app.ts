@@ -433,7 +433,16 @@ app.delete('/delete_article', (async (req: express.Request<{}, {}, DeleteArticle
     const user = await findUserByUsername(loginInfo.username);
     if (!user) throw new Error('User not found');
 
-    const article = await deleteArticleByAuthor(user._id.toString(), article_id);
+    const article_image = await deleteArticleByAuthor(user._id.toString(), article_id);
+
+    for (const fileUrl of article_image) {
+      const urlPath = new URL(fileUrl).pathname;
+      const absolutePath = path.resolve(__dirname, '..', `.${urlPath}`);
+
+      if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
+      }
+    }
 
     const response: DeleteArticleResponse = {
       success: true,

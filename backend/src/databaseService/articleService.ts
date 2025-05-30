@@ -35,7 +35,7 @@ export const deleteArticleByAuthor = async (userId: string, articleId: string) =
 
     await Article.findByIdAndDelete(articleId);
 
-    return true;
+    return article.image;
 };
 
 //create a comment
