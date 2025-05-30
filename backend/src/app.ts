@@ -827,8 +827,7 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
           },
           likes: article.likes,
           createdAt: article.createdAt.toISOString(),
-          image: article.image ||
-            `http://localhost:3000/uploads/${Math.floor(Math.random() * 8) + 1}.jpg`,
+         image: article.image?.length ? article.image : [`http://localhost:3000/uploads/${Math.floor(Math.random() * 8) + 1}.jpg`],
         })),
       },
     };
@@ -1284,7 +1283,9 @@ app.delete('/delete_file', (async (req: express.Request<{}, {}, DeleteFileBody>,
     return;
   }
 
-  const absolutePath = path.resolve(__dirname, '..', 'uploads', file_url);
+  // 去掉多余的 'uploads'
+const absolutePath = path.resolve(__dirname, '..', file_url.startsWith('/') ? `.${file_url}` : file_url)
+
 
   try {
     if (!fs.existsSync(absolutePath)) {

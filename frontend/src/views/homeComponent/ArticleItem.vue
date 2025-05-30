@@ -1,27 +1,30 @@
 <script setup lang="ts">
 const props = defineProps<{
-  title: string;
-  author: string;
-  likes: number;
-  createdAt: string;
-  image: string;
-}>();
+  title: string
+  author: string
+  authorAvatar: string
+  likes: number
+  createdAt: string
+  coverImage: string
+}>()
 </script>
 
 <template>
-  <div class="article-item">
+  <div class="article-item" @click="$emit('click')">
     <!-- Cover image -->
-    <img :src="image" alt="cover" class="cover" />
+    <img
+      :src="`http://localhost:3000${coverImage}` || '/default-cover.png'"
+      alt="cover"
+      class="cover"
+    />
 
     <!-- Title -->
-    <div class="title">
-      {{ title }}
-    </div>
+    <div class="title">{{ title }}</div>
 
     <!-- Info bar -->
     <div class="info-bar">
       <div class="author-info">
-        <img :src="image" alt="avatar" class="avatar" />
+        <img :src="authorAvatar || '/default-avatar.png'" alt="avatar" class="avatar" />
         <span class="author-name">{{ author }}</span>
       </div>
       <div class="likes">❤️ {{ likes }}</div>
@@ -57,7 +60,7 @@ const props = defineProps<{
   margin: 8px 0 4px;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* 最多两行 */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
