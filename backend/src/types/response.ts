@@ -1,3 +1,4 @@
+
 export type APIResponse<T> = {
   success         : boolean;
   data?           : T;
@@ -14,6 +15,10 @@ export interface LoginRes {
   token           : string;
 }
 
+export interface ChangeUserImageRes {
+  message         : string;
+}
+
 export interface CodeRes {
   _id             : string;
   code            : string;
@@ -24,6 +29,7 @@ export interface CreateArticleRes {
   title           : string;
   category?       : string;
   content?        : string;
+  image?          : string[];
   author          : string;
   likes           : number;
   comments        : never[];
@@ -49,7 +55,7 @@ export interface BrowseArticleRes {//single article
   };
   likes           : number;
   createdAt       : string;
-  image         : string;
+  image           : string[];
 }
 
 export interface BrowseArticlesRes {//return several articles browsing
@@ -131,9 +137,18 @@ export interface UnlikeArticleRes {
   message         : string;
 }
 
+export interface UploadFileRes {
+  file_url        : string;
+}
+
+export interface DeleteFileRes {
+  message         : string;
+}
+
 
 export type SignupResponse              = APIResponse<SignupRes>;
 export type LoginResponse               = APIResponse<LoginRes>;
+export type ChangeUserImageResponse     = APIResponse<ChangeUserImageRes>;
 export type CodeResponse                = APIResponse<CodeRes>;
 export type CreateArticleResponse       = APIResponse<CreateArticleRes>;
 export type CreateCommentResponse       = APIResponse<CreateCommentRes>;
@@ -145,3 +160,5 @@ export type getUsersArticlesResponse    = APIResponse<getUsersArticlesRes>;
 export type SearchUserResponse          = APIResponse<SearchUserRes>;
 export type LikeArticleResponse         = APIResponse<LikeArticleRes>;
 export type UnlikeArticleResponse       = APIResponse<UnlikeArticleRes>;
+export type UploadFileResponse          = APIResponse<UploadFileRes>;
+export type DeleteFileRessponse          = APIResponse<DeleteFileRes>;

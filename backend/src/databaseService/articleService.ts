@@ -10,11 +10,12 @@ export const articleExists = async (articleId: string): Promise<boolean> => {
 };
 
 //create an article
-export const createArticle = async (title: string, category: string, content: string, authorId: string) => {
+export const createArticle = async (title: string, category: string, image: string[], content: string, authorId: string) => {
   const newPost = new Article({
     title,
     category,
     content,
+    image,
     author: authorId,
     likes: 0,
     comments: [],

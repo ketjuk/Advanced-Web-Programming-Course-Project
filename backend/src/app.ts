@@ -2,24 +2,30 @@ import connectDB from "./db";
 
 import express, { RequestHandler } from "express";
 
+import { upload } from "./uploadMiddleware";
+
 //request
 import {
   LoginBody,
   SignupBody,
+  ChangeUserImageBody,
   CreateArticleBody,
   BrowseArticleBody,
   ArticleDetailBody,
   CreateCommentBody,
   DeleteCommentBody,
   CreateReplyBody,
-  LikeArticlebody,
-  UnlikeArticlebody,
+  LikeArticleBody,
+  UnlikeArticleBody,
   SearchUserBody,
+  UploadFileBody,
+  DeleteFileBody,
 } from "./types/request";
 //user database
 import {
   loginUser,
   signupUser,
+  changeUserImage,
   createCode,
   checkCode,
   findUserByUsername,
@@ -50,6 +56,7 @@ import {
   CodeResponse,
   LoginResponse,
   SignupResponse,
+  ChangeUserImageResponse,
   CreateCommentResponse,
   DeleteCommentResponse,
   CommentReplyResponse,
@@ -60,18 +67,20 @@ import {
   LikeArticleResponse,
   UnlikeArticleResponse,
   SearchUserResponse,
+  UploadFileResponse,
+  DeleteFileRessponse,
 } from "./types/response";
-
 import path from "path";
-
 const app = express();
 const port = 3000;
+const fs = require("fs");
+
 app.use(express.json());
 app.use(require("cors")());
 //connect to Mongo database
 connectDB();
 // Enable static access to "upload" directory
-app.use("/upload", express.static(path.resolve(__dirname, "../upload")));
+app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 
 /*
   POST method
@@ -213,6 +222,84 @@ app.post("/sign_up", (async (
 }) as RequestHandler);
 
 /*
+  POST method
+  request with /change_user_image
+  header:
+  Authentication: <token>
+  body: (!!!image must includes the address of server)
+  {
+    "image": "http://localhost:3000/uploads/1.jpg"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "Successfully changed user image"
+    }
+  }
+  
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "success": false,
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a json message:
+  {
+    "success": false,
+    "error": "Missing token"
+  }
+
+  if image is empty, return with 400 status code and a json message:
+  {
+    "success": false,
+    "error": "Missing image"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "success": false,
+    "error": "User not found"
+  }
+*/
+app.post("/change_user_image", (async (
+  req: express.Request<{}, {}, ChangeUserImageBody>,
+  res: express.Response<ChangeUserImageResponse>
+) => {
+  const token = req.header("Authentication");
+  const { image } = req.body;
+  if (!token) {
+    res.status(400).json({ success: false, error: "Missing token" });
+    return;
+  }
+  if (!image) {
+    res.status(400).json({ success: false, error: "Missing image" });
+    return;
+  }
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error("Invalid token");
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error("Cannot find user information");
+
+    const result = await changeUserImage(token, image);
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: { message: "Successfully changed user image" },
+      });
+  } catch (err) {
+    res.status(401).json({
+      success: false,
+      error: (err as Error).message,
+    });
+  }
+}) as RequestHandler);
+
+/*
   GET method
   request with: /request_code
   no additional information needed for a request
@@ -241,21 +328,36 @@ app.get("/request_code", (async (
   {
     "title": <compulsatory string>
     "category": string,
-    "content":  string
+    "content":  string,
+    "image": [
+      "http://localhost:3000/upload/1.jpg",
+      "http://localhost:3000/upload/2.jpg"
+    ]
   }
 
   if success, return with 201 status code and a json message: 
   {
     "success": true,
     "data": {
-      "title": "test article",
-      "category": "test field",
-      "content": "some text",
-      "author": "111@11.com",
-      "likes": 0,
+      "article": {
+        "article_id": "6836ddaecca69b94f85da715",
+        "title": "test image2",
+        "author": {
+          "username": "111@11.com",
+          "image": ""
+        },
+        "likes": 0,
+        "createdAt": "2025-05-28T09:55:58.024Z",
+        "image": [
+          "http://localhost:3000/upload/1.jpg",
+          "http://localhost:3000/upload/2.jpg"
+        ]
+      },
+      "liked": false,
+      "collected": false,
       "comments": []
     }
-  }
+}
 
   if token is wrong, return with 401 status code and a json message:
   {
@@ -278,7 +380,7 @@ app.post("/create_article", (async (
   res: express.Response<CreateArticleResponse | { error: string }>
 ) => {
   const token = req.header("Authentication");
-  const { title, category, content } = req.body;
+  const { title, category, content, image } = req.body;
 
   if (!token || !title || !category) {
     res.status(400).json({ error: "Missing token, title or category" }); //can be divided afterwards
@@ -295,6 +397,7 @@ app.post("/create_article", (async (
     const article = await createArticle(
       title,
       category,
+      image,
       content,
       user._id.toString()
     );
@@ -306,6 +409,7 @@ app.post("/create_article", (async (
         title: article.title,
         category: article.category ?? "",
         content: article.content ?? "",
+        image: article.image ?? "",
         author: user.username,
         likes: article.likes,
         comments: [],
@@ -800,17 +904,19 @@ app.post("/browse_article", (async (
           author: {
             username: (article.author as any).username,
             //todo:real image url
-            image: `http://localhost:3000/upload/${
+            image: `http://localhost:3000/uploads/${
               Math.floor(Math.random() * 8) + 1
             }.jpg`,
           },
           likes: article.likes,
           createdAt: article.createdAt.toISOString(),
-          image:
-            article.image ||
-            `http://localhost:3000/upload/${
-              Math.floor(Math.random() * 8) + 1
-            }.jpg`,
+          image: article.image?.length
+            ? article.image
+            : [
+                `http://localhost:3000/uploads/${
+                  Math.floor(Math.random() * 8) + 1
+                }.jpg`,
+              ],
         })),
       },
     };
@@ -833,35 +939,27 @@ app.post("/browse_article", (async (
 
   if success, return with 200 status code and a json message:
   {
-  "success": true,
-  "data": {
-    "article": {
-      "article_id": "6812251120cbc77f8a604be3",
-      "title": "test article",
-      "author": {
-        "username": "111@11.com",
-        "image": ""
-      },
-      "likes": 0,
-      "createdAt": "2025-04-30T13:26:41.639Z"
-    },
-    "liked": false,
-    "collected": false,
-    "comments": [
-      {
-        "_id": "681538fd0f1184e1ecade1e1",
-        "content": "111",
+    "success": true,
+    "data": {
+      "article": {
+        "article_id": "6836ddaecca69b94f85da715",
+        "title": "test image2",
         "author": {
           "username": "111@11.com",
           "image": ""
         },
-        "createdAt": "2025-05-02T21:28:29.768Z",
-        "isMine": true,
-        "replies": []
-      }
-    ]
+        "likes": 0,
+        "createdAt": "2025-05-28T09:55:58.024Z",
+        "image": [
+          "http://localhost:3000/upload/1.jpg",
+          "http://localhost:3000/upload/2.jpg"
+        ]
+      },
+      "liked": false,
+      "collected": false,
+      "comments": []
+    }
   }
-}
 
   if token is wrong, return with 401 status code and a json message:
   {
@@ -914,11 +1012,13 @@ app.post("/article_detail", (async (
           },
           likes: article.likes,
           createdAt: article.createdAt.toISOString(),
-          image:
-            article.image ||
-            `http://localhost:3000/upload/${
-              Math.floor(Math.random() * 8) + 1
-            }.jpg`,
+          image: article.image?.length
+            ? article.image
+            : [
+                `http://localhost:3000/uploads/${
+                  Math.floor(Math.random() * 8) + 1
+                }.jpg`,
+              ],
         },
         liked: article.liked,
         collected: article.collected,
@@ -1055,7 +1155,7 @@ app.get("/get_user_articles", (async (
   }
 */
 app.post("/like_article", (async (
-  req: express.Request<{}, {}, LikeArticlebody>,
+  req: express.Request<{}, {}, LikeArticleBody>,
   res: express.Response<LikeArticleResponse | { error: string }>
 ) => {
   const token = req.header("Authentication");
@@ -1138,7 +1238,7 @@ app.post("/like_article", (async (
   }
 */
 app.post("/unlike_article", (async (
-  req: express.Request<{}, {}, UnlikeArticlebody>,
+  req: express.Request<{}, {}, UnlikeArticleBody>,
   res: express.Response<UnlikeArticleResponse | { error: string }>
 ) => {
   const token = req.header("Authentication");
@@ -1179,6 +1279,156 @@ app.post("/unlike_article", (async (
     res.status(200).json(response);
   } catch (error) {
     res.status(401).json({ error: (error as Error).message });
+  }
+}) as RequestHandler);
+
+/*
+  POST method
+  request with /upload_file
+  header:
+  Authentication: <token>
+  body(form format):
+    "file": <attached file>
+
+  if success, return with 200 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "file_url": "/upload/1748358637888-.jpg"
+    }
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if file is unattached or uploaded with wrong format, return with 400 status code and a json message:
+  {
+    "error": "Missing file"
+  }
+*/
+app.post("/upload_file", upload.single("file"), (async (
+  req: UploadFileBody,
+  res: express.Response<UploadFileResponse>
+) => {
+  const token = req.header("Authentication");
+  if (!token) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    res.status(400).json({ success: false, error: "Missing token" }); // if it does not have authentication, then delete the file
+    return;
+  }
+  const loginInfo = await findLoginInfoByToken(token);
+  if (!loginInfo) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    res.status(400).json({ success: false, error: "Invalid token" });
+    return;
+  }
+  if (!req.file) {
+    res.status(400).json({ success: false, error: "Missing file" });
+    return;
+  }
+
+  res
+    .status(200)
+    .json({
+      success: true,
+      data: { file_url: "/uploads/" + req.file.filename },
+    });
+}) as RequestHandler);
+
+/*
+  DELETE method
+  request with /delete_file
+  header:
+  Authentication: <token>
+  body:
+  {
+    "file_url": <1.jpg>
+  }
+
+  if success, return with 200 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "Successfully deleted the file"
+    }
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if file_url is blank, return with 404 status code and a json message:
+  {
+    "error": "File name is missing"
+  }
+
+  if the file does not exist, return with 404 status code and a json message:
+  {
+    "success": false,
+    "error": "File does not exist"
+  }
+*/
+app.delete("/delete_file", (async (
+  req: express.Request<{}, {}, DeleteFileBody>,
+  res: express.Response<DeleteFileRessponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
+  let { file_url } = req.body;
+
+  if (!token) {
+    res.status(400).json({ error: "Missing token" });
+    return;
+  }
+  const loginInfo = await findLoginInfoByToken(token);
+  if (!loginInfo) {
+    res.status(400).json({ success: false, error: "Invalid token" });
+    return;
+  }
+  if (!file_url) {
+    res.status(404).json({ success: false, error: "File name is missing" });
+    return;
+  }
+
+  // 去掉多余的 'uploads'
+  const absolutePath = path.resolve(
+    __dirname,
+    "..",
+    file_url.startsWith("/") ? `.${file_url}` : file_url
+  );
+
+  try {
+    if (!fs.existsSync(absolutePath)) {
+      res.status(404).json({ success: false, error: "File does not exist" });
+      return;
+    }
+
+    fs.unlinkSync(absolutePath); // if the file is exist
+
+    const response: DeleteFileRessponse = {
+      success: true,
+      data: {
+        message: "Successfully deleted the file",
+      },
+    };
+    res.status(200).json(response);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: (err as Error).message,
+    });
   }
 }) as RequestHandler);
 
