@@ -170,7 +170,7 @@ export async function getArticlesByUser(ids: string[]) {
 
 export const getUserArticles = async (userId: string) => {
   return await Article.find({ author: userId })
-    .select('_id title createdAt')
+    .select('_id title createdAt image')
     .sort({ createdAt: -1 }); // time reverse
 };
 

@@ -15,7 +15,7 @@
         @click="openArticleDetail(article.article_id)"
       >
         <div class="article-image">
-          <img :src="article.image || getDefaultImage()" :alt="article.title" />
+          <img :src="getImageUrl(article.image)" :alt="article.title" />
         </div>
         <div class="article-content">
           <h2>{{ article.title }}</h2>
@@ -32,7 +32,7 @@
         <div v-else-if="articleDetailError" class="error">{{ articleDetailError }}</div>
         <div v-else-if="articleDetail" class="article-detail">
           <div class="article-image">
-            <img :src="articleDetail.image || getDefaultImage()" :alt="articleDetail.title" />
+            <img :src="getImageUrl(articleDetail.image)" :alt="articleDetail.title" />
           </div>
           <div class="article-info">
             <h2>{{ articleDetail.title }}</h2>
@@ -58,7 +58,7 @@ interface Article {
   article_id: string
   title: string
   createdAt: string
-  image?: string
+  image?: string | string[]
 }
 
 interface ArticleDetail {
@@ -66,7 +66,7 @@ interface ArticleDetail {
   title: string
   content: string
   createdAt: string
-  image?: string
+  image?: string | string[]
   likes: number
 }
 
@@ -158,7 +158,28 @@ export default defineComponent({
 
     const getDefaultImage = () => {
       const randomNum = Math.floor(Math.random() * 8) + 1
-      return `http://localhost:3000/upload/${randomNum}.jpg`
+      return `http://localhost:3000/uploads/${randomNum}.jpg`
+    }
+
+    const getImageUrl = (image: string | string[] | undefined) => {
+      if (!image) return getDefaultImage()
+
+      // Handle array of images (take the first one)
+      if (Array.isArray(image) && image.length > 0) {
+        const firstImage = image[0]
+        if (firstImage.startsWith('http')) return firstImage
+        if (firstImage.startsWith('/uploads/')) return `http://localhost:3000${firstImage}`
+        return `http://localhost:3000/uploads/${firstImage}`
+      }
+
+      // Handle single image as string
+      if (typeof image === 'string') {
+        if (image.startsWith('http')) return image
+        if (image.startsWith('/uploads/')) return `http://localhost:3000${image}`
+        return `http://localhost:3000/uploads/${image}`
+      }
+
+      return getDefaultImage()
     }
 
     onMounted(() => {
@@ -171,6 +192,7 @@ export default defineComponent({
       error,
       formatDate,
       getDefaultImage,
+      getImageUrl,
       showModal,
       articleDetail,
       articleDetailLoading,
