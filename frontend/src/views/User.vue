@@ -1,5 +1,6 @@
 <template>
   <div class="user-page">
+    <h1>My Posts</h1>
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">
       {{ error }}
@@ -32,7 +33,7 @@
         <div v-else-if="articleDetailError" class="error">{{ articleDetailError }}</div>
         <div v-else-if="articleDetail" class="article-detail">
           <div class="article-image">
-            <img :src="getImageUrl(articleDetail.image)" :alt="articleDetail.title" />
+            <img :src="articleDetail.image || getDefaultImage()" :alt="articleDetail.title" />
           </div>
           <div class="article-info">
             <h2>{{ articleDetail.title }}</h2>
@@ -66,7 +67,7 @@ interface ArticleDetail {
   title: string
   content: string
   createdAt: string
-  image?: string | string[]
+  image?: string
   likes: number
 }
 
@@ -163,7 +164,7 @@ export default defineComponent({
 
     const getImageUrl = (image: string | string[] | undefined) => {
       if (!image) return getDefaultImage()
-
+      
       // Handle array of images (take the first one)
       if (Array.isArray(image) && image.length > 0) {
         const firstImage = image[0]
@@ -171,14 +172,14 @@ export default defineComponent({
         if (firstImage.startsWith('/uploads/')) return `http://localhost:3000${firstImage}`
         return `http://localhost:3000/uploads/${firstImage}`
       }
-
+      
       // Handle single image as string
       if (typeof image === 'string') {
         if (image.startsWith('http')) return image
         if (image.startsWith('/uploads/')) return `http://localhost:3000${image}`
         return `http://localhost:3000/uploads/${image}`
       }
-
+      
       return getDefaultImage()
     }
 
@@ -198,7 +199,7 @@ export default defineComponent({
       articleDetailLoading,
       articleDetailError,
       openArticleDetail,
-      closeModal,
+      closeModal
     }
   },
 })

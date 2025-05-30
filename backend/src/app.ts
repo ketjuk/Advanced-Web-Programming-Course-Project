@@ -6,12 +6,12 @@ import { upload } from "./uploadMiddleware";
 
 //request
 import {
+  ArticleDetailBody,
+  BrowseArticleBody,
+  CreateArticleBody,
   LoginBody,
   SignupBody,
   ChangeUserImageBody,
-  CreateArticleBody,
-  BrowseArticleBody,
-  ArticleDetailBody,
   CreateCommentBody,
   DeleteCommentBody,
   CreateReplyBody,
@@ -80,7 +80,14 @@ app.use(require("cors")());
 //connect to Mongo database
 connectDB();
 // Enable static access to "upload" directory
-app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
+app.use(
+  "/uploads",
+  express.static(path.resolve(__dirname, "../uploads"), {
+    setHeaders: (res, path) => {
+      res.set("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  })
+);
 
 /*
   POST method
@@ -316,6 +323,8 @@ app.get("/request_code", (async (
   const code = await createCode();
   res.status(200).json({ success: true, data: { ...code } });
 }) as RequestHandler);
+
+
 
 /*
   POST method
@@ -842,7 +851,6 @@ app.post("/search_user", (async (
         {
           "article_id": "6812251120cbc77f8a604be3",
           "title": "test article",
-          "content": "test content",
           "author": {
             "username": "111@11.com",
             "image": ""
@@ -853,7 +861,6 @@ app.post("/search_user", (async (
         {
           "article_id": "681224058cb26ccf73a1b4ec",
           "title": "test article",
-          "content": "test content",
           "author": {
             "username": "111@11.com",
             "image": ""
@@ -901,9 +908,9 @@ app.post("/browse_article", (async (
         articles: articles.map((article) => ({
           article_id: article._id.toString(),
           title: article.title,
-          content: article.content || "",
           author: {
             username: (article.author as any).username,
+            //todo:real image url
             image: `http://localhost:3000/uploads/${
               Math.floor(Math.random() * 8) + 1
             }.jpg`,
@@ -944,7 +951,6 @@ app.post("/browse_article", (async (
       "article": {
         "article_id": "6836ddaecca69b94f85da715",
         "title": "test image2",
-        "content": "test content",
         "author": {
           "username": "111@11.com",
           "image": ""
@@ -1007,7 +1013,6 @@ app.post("/article_detail", (async (
         article: {
           article_id: article._id.toString(),
           title: article.title,
-          content: article.content,
           author: {
             username: (article.author as any).username,
             image: (article.author as any).image,
@@ -1048,13 +1053,11 @@ app.post("/article_detail", (async (
         {
           "article_id": "6812251120cbc77f8a604be3",
           "title": "test article",
-          "content": "test content",
           "createdAt": "2025-04-30T13:26:41.639Z"
         },
         {
           "article_id": "681224058cb26ccf73a1b4ec",
           "title": "test article",
-          "content": "test content",
           "createdAt": "2025-04-30T13:22:13.667Z"
         }
       ]
@@ -1110,7 +1113,6 @@ app.get("/get_user_articles", (async (
         articles: articles.map((article) => ({
           article_id: article._id.toString(),
           title: article.title,
-          content: article.content || "",
           createdAt: article.createdAt.toISOString(),
           image: article.image?.length
             ? article.image[0]
