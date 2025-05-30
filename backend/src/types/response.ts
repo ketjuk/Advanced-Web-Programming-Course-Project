@@ -58,6 +58,19 @@ export interface BrowseArticleRes {//single article
   image           : string[];
 }
 
+export interface BrowseArticleResDetail {//single article
+  article_id      : string;
+  title           : string;
+  content         : string;
+  author          : {
+    username      : string;
+    image         : string;
+  };
+  likes           : number;
+  createdAt       : string;
+  image           : string[];
+}
+
 export interface BrowseArticlesRes {//return several articles browsing
   articles        : BrowseArticleRes[];
 }
@@ -94,7 +107,7 @@ export interface BrowseCommentRes {//first level comment
 }
 
 export interface ArticleDetailRes {//return signle detailed article
-  article         : BrowseArticleRes;
+  article         : BrowseArticleResDetail;
   liked           : boolean;
   collected       : boolean;
   comments        : BrowseCommentRes[];

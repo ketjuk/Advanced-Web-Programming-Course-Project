@@ -99,6 +99,7 @@ export const getPostDetail = async (postId: string, currentUserId: string) => {
   const objectId = new mongoose.Types.ObjectId(postId);
 
   const post = await Article.findById(objectId)
+  .select('title content image author likes createdAt comments')
     .populate('author', 'username image')
     .populate({
       path: 'comments',

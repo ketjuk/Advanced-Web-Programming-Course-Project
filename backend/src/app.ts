@@ -915,6 +915,7 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
         article: {
           article_id: article._id.toString(),
           title: article.title,
+          content: article.content,
           author: {
             username: (article.author as any).username,
             image: (article.author as any).image,
