@@ -81,9 +81,13 @@ export interface BrowseArticlesRes {//return several articles browsing
 
 export interface getUsersArticlesRes {//return the articles published by specific author
   articles: {
-    article_id: string;
-    title: string;
-    createdAt: string;
+    article_id    : string;
+    title         : string;
+    createdAt     : string;
+    likes         : number;
+    content       : string;
+    category      : string;
+    image         : string[];
   }[];
 }
 

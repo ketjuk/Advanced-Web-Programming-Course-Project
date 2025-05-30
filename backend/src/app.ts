@@ -1032,14 +1032,58 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
     "data": {
       "articles": [
         {
+          "article_id": "683a0d5f68496f9c608daf18",
+          "title": "test to delete",
+          "createdAt": "2025-05-30T19:56:15.404Z",
+          "likes": 0,
+          "content": "test",
+          "category": "test",
+          "image": [
+            "http://localhost:3000/upload/test_delete.jpg"
+          ]
+        },
+        {
+          "article_id": "6836ddaecca69b94f85da715",
+          "title": "test image2",
+          "createdAt": "2025-05-28T09:55:58.024Z",
+          "likes": 0,
+          "content": "test",
+          "category": "test",
+          "image": [
+            "http://localhost:3000/upload/1.jpg",
+            "http://localhost:3000/upload/2.jpg"
+          ]
+        },
+        {
+          "article_id": "6836dd0d90bc301d6623aa7f",
+          "title": "test image",
+          "createdAt": "2025-05-28T09:53:17.163Z",
+          "likes": 0,
+          "content": "test",
+          "category": "test",
+          "image": []
+        },
+        {
           "article_id": "6812251120cbc77f8a604be3",
           "title": "test article",
-          "createdAt": "2025-04-30T13:26:41.639Z"
+          "createdAt": "2025-04-30T13:26:41.639Z",
+          "likes": 0,
+          "content": "some text",
+          "category": "some text",
+          "image": [
+            ""
+          ]
         },
         {
           "article_id": "681224058cb26ccf73a1b4ec",
           "title": "test article",
-          "createdAt": "2025-04-30T13:22:13.667Z"
+          "createdAt": "2025-04-30T13:22:13.667Z",
+          "likes": 0,
+          "content": "some text",
+          "category": "some text",
+          "image": [
+            ""
+          ]
         }
       ]
     }
@@ -1091,6 +1135,10 @@ app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: exp
           article_id: article._id.toString(),
           title: article.title,
           createdAt: article.createdAt.toISOString(),
+          likes: article.likes,
+          content: article.content,
+          category: article.content,
+          image: article.image
         })),
       },
     };
