@@ -35,6 +35,10 @@ export interface CreateArticleRes {
   comments        : never[];
 }
 
+export interface DeleteArticleRes {
+  message         : string;
+}
+
 export interface CreateCommentRes {
   article_id      : string,
   author          : string,
@@ -164,6 +168,7 @@ export type LoginResponse               = APIResponse<LoginRes>;
 export type ChangeUserImageResponse     = APIResponse<ChangeUserImageRes>;
 export type CodeResponse                = APIResponse<CodeRes>;
 export type CreateArticleResponse       = APIResponse<CreateArticleRes>;
+export type DeleteArticleResponse       = APIResponse<DeleteArticleRes>;
 export type CreateCommentResponse       = APIResponse<CreateCommentRes>;
 export type DeleteCommentResponse       = APIResponse<DeleteCommentRes>;
 export type CommentReplyResponse        = APIResponse<CommentReplyRes>;

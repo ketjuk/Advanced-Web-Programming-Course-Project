@@ -6,7 +6,7 @@ import { upload } from './uploadMiddleware';
 
 //request
 import {  LoginBody, SignupBody, ChangeUserImageBody,
-          CreateArticleBody, 
+          CreateArticleBody, DeleteArticleBody,
           BrowseArticleBody, ArticleDetailBody, 
           CreateCommentBody, DeleteCommentBody, CreateReplyBody, 
           LikeArticleBody, UnlikeArticleBody, 
@@ -21,14 +21,16 @@ import {
           likeArticleForUser, unlikeArticleForUser
           } from './databaseService/userService';
 //article database
-import {  articleExists, createArticle, getBrowseArticle, getPostDetail, 
+import {  articleExists, createArticle, deleteArticleByAuthor, 
+          getBrowseArticle, getPostDetail, 
           addComment, deleteCommentById, addSecondLevelComment,
           likeArticle, unlikeArticle,
           getArticlesByUser, getUserArticles, getUserComments } from './databaseService/articleService';
 //response
 import {  CodeResponse, LoginResponse, SignupResponse, ChangeUserImageResponse,
           CreateCommentResponse, DeleteCommentResponse, CommentReplyResponse, 
-          CreateArticleResponse, BrowseArticlesResponse, ArticleDetailResponse, getUsersArticlesResponse,
+          CreateArticleResponse, DeleteArticleResponse,
+          BrowseArticlesResponse, ArticleDetailResponse, getUsersArticlesResponse,
           LikeArticleResponse, UnlikeArticleResponse,
           SearchUserResponse,
           UploadFileResponse, DeleteFileRessponse } from './types/response';
@@ -360,6 +362,83 @@ app.post('/create_article', (async (req: express.Request<{}, {}, CreateArticleBo
         author: user.username,
         likes: article.likes,
         comments: [],
+      },
+    };
+
+    res.status(201).json(response);
+  } catch (err) {
+    res.status(401).json({ error: (err as Error).message });
+  }
+}) as RequestHandler);
+
+/*
+  DELETE method
+  request with /delete_article
+  header:
+  Authentication: <token>
+  {
+    "article_id": "683a09b9956399ef7eb0e182"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "successfully delete the article"
+    }
+  }
+  
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if article_id is not matched with any articles, return with 401 status code and a json message:
+  {
+    "error": "Article not found"
+  }
+
+  if the token is not from the author of the article, return with 401 status code and a json message:
+  {
+    "error": "only author can delete this article"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+*/
+app.delete('/delete_article', (async (req: express.Request<{}, {}, DeleteArticleBody>, res: express.Response<DeleteArticleResponse | { error: string }>) => {
+  const token = req.header('Authentication');
+  const { article_id } = req.body;
+
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
+    return;
+  }
+  if(!article_id) {
+    res.status(400).json({ error: 'Missing article id' });
+    return;
+  }
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error('Invalid token');
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error('User not found');
+
+    const article = await deleteArticleByAuthor(user._id.toString(), article_id);
+
+    const response: DeleteArticleResponse = {
+      success: true,
+      data: {
+        message: "successfully delete the article"
       },
     };
 
@@ -762,28 +841,23 @@ app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, r
   {
     "success": true,
     "data": {
-      "articles": [
-        {
-          "article_id": "6812251120cbc77f8a604be3",
-          "title": "test article",
-          "author": {
-            "username": "111@11.com",
-            "image": ""
-          },
-          "likes": 0,
-          "createdAt": "2025-04-30T13:26:41.639Z"
+      "article": {
+        "article_id": "683a02f9e27f3be70246bcfc",
+        "title": "corridor",
+        "content": "a",
+        "author": {
+          "username": "kiki",
+          "image": ""
         },
-        {
-          "article_id": "681224058cb26ccf73a1b4ec",
-          "title": "test article",
-          "author": {
-            "username": "111@11.com",
-            "image": ""
-          },
-          "likes": 0,
-          "createdAt": "2025-04-30T13:22:13.667Z"
-        }
-      ]
+        "likes": 0,
+        "createdAt": "2025-05-30T19:11:53.276Z",
+        "image": [
+          "/uploads/1748632302974-.jpeg"
+        ]
+      },
+      "liked": false,
+      "collected": false,
+      "comments": []
     }
   }
   

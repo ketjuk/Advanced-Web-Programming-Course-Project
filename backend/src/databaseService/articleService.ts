@@ -24,6 +24,20 @@ export const createArticle = async (title: string, category: string, image: stri
   return newPost;
 };
 
+export const deleteArticleByAuthor = async (userId: string, articleId: string) => {
+    const article = await Article.findById(articleId);
+    if (!article) throw new Error('Article not found');
+
+    if (!article.author || article.author.toString() !== userId) 
+      throw new Error('only author can delete this article');
+
+    await Comment.deleteMany({ article: articleId });
+
+    await Article.findByIdAndDelete(articleId);
+
+    return true;
+};
+
 //create a comment
 export const addComment = async (postId: string, userId: string, content: string) => {
   const post = await Article.findById(postId);

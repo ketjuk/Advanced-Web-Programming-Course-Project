@@ -25,6 +25,10 @@ export interface CreateArticleBody {
   image       : string[];
 }
 
+export interface DeleteArticleBody {
+  article_id  : string;
+}
+
 export interface CreateCommentBody {
   article_id  : string;
   content     : string;
