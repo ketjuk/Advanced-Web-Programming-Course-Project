@@ -3,6 +3,7 @@
     <el-button type="warning" :loading="loading" @click="submitMultipleArticles">
       Generate 100 Articles
     </el-button>
+
     <el-card>
       <template #header>Create New Article</template>
 
@@ -24,6 +25,20 @@
           />
         </el-form-item>
 
+        <!-- 完整上传组件 -->
+        <el-form-item label="Images">
+          <el-upload
+            class="upload-demo"
+            action=""
+            list-type="picture-card"
+            :file-list="fileList"
+            :http-request="customUpload"
+            :on-remove="handleRemove"
+          >
+            <el-icon><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="submitForm">Submit</el-button>
           <el-button @click="resetForm">Reset</el-button>
@@ -36,18 +51,25 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElForm, ElMessage } from 'element-plus'
-import { API_CreateArticle } from '@/api'
+import { ElForm, ElMessage, UploadRequestOptions } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+import { API_CreateArticle, API_UploadFile, API_DeleteFile } from '@/api'
 import type { CreateArticleBody } from '../../../backend/src/types/request'
 
 const router = useRouter()
 
+// 表单初始化
 const form = ref<CreateArticleBody>({
   title: '',
   category: '',
   content: '',
+  image: []
 })
 
+// 核心 fileList，统一绑定
+const fileList = ref<{ name: string; url: string }[]>([])
+
+// 表单校验规则
 const rules = {
   title: [{ required: true, message: 'Title is required', trigger: 'blur' }],
   category: [{ required: true, message: 'Category is required', trigger: 'blur' }],
@@ -57,9 +79,9 @@ const rules = {
 const formRef = ref<InstanceType<typeof ElForm>>()
 const loading = ref(false)
 
+// 提交逻辑
 const submitForm = async () => {
   if (!formRef.value) return
-
   await formRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
@@ -67,11 +89,11 @@ const submitForm = async () => {
         const res = await API_CreateArticle(form.value)
         if (res.success) {
           ElMessage.success('Article created successfully!')
-          router.push('/') // Redirect to homepage
+          router.push('/')
         } else {
           ElMessage.error(res.error || 'Article creation failed')
         }
-      } catch (err) {
+      } catch {
         ElMessage.error('Request failed. Please try again.')
       } finally {
         loading.value = false
@@ -80,14 +102,13 @@ const submitForm = async () => {
   })
 }
 
+// 重置逻辑
 const resetForm = () => {
-  form.value = {
-    title: '',
-    category: '',
-    content: '',
-  }
+  form.value = { title: '', category: '', content: '', image: [] }
+  fileList.value = []
 }
 
+// 测试批量插入逻辑
 const submitMultipleArticles = async () => {
   loading.value = true
   const titles = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon']
@@ -104,6 +125,7 @@ const submitMultipleArticles = async () => {
       title: `${titles[i % titles.length]} Article #${i + 1}`,
       category: `Category${(i % 5) + 1}`,
       content: contents[i % contents.length],
+      image: []
     }
 
     try {
@@ -120,4 +142,72 @@ const submitMultipleArticles = async () => {
   loading.value = false
   router.push('/')
 }
+
+// 上传逻辑：上传成功后手动同步 fileList & form.image
+const customUpload = async (options: UploadRequestOptions) => {
+  const { file, onSuccess, onError } = options
+
+  try {
+    const res = await API_UploadFile(file as File)
+    if (res.success) {
+      const url = res.data.file_url
+      console.log('File uploaded successfully:', url)
+      /* --- 关键一行：把当前 file 的 url 改成服务器返回的 url --- */
+      ;(file as any).url = url
+
+      fileList.value.push({ name: file.name, url })
+      form.value.image?.push(url)
+
+      onSuccess?.(res, file as any)
+    } else {
+      ElMessage.error(res.error || 'File upload failed')
+      onError?.(new Error(res.error))
+    }
+  } catch (err) {
+    ElMessage.error('File upload error')
+    onError?.(err as Error)
+  }
+}
+
+const handleRemove = async (file: any) => {
+  const idx = fileList.value.findIndex(f => f.name === file.name)   // 用 name 或 uid
+  console.log('Removing file at index:', fileList.value, file.url)
+
+  if (idx !== -1) {
+    try {
+      const res = await API_DeleteFile(fileList.value[idx].url)      // 传真正的服务器 url
+      if (res.success) {
+        fileList.value.splice(idx, 1)
+        form.value.image?.splice(idx, 1)
+      } else {
+        ElMessage.error(res.error || 'File deletion failed')
+      }
+    } catch {
+      ElMessage.error('Server deletion failed')
+    }
+  }
+}
+
 </script>
+
+
+
+
+<style scoped>
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+.image-item {
+  position: relative;
+}
+.preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+</style>

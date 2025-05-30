@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
-import type { BrowseArticleBody ,CreateArticleBody,LoginBody, SignupBody } from '../../../backend/src/types/request';
-import type {BrowseArticlesResponse,CreateArticleResponse, APIResponse, CodeResponse, LoginResponse, SignupResponse } from '../../../backend/src/types/response';
+import type {DeleteFileBody, UploadFileBody,ArticleDetailBody,BrowseArticleBody ,CreateArticleBody,LoginBody, SignupBody } from '../../../backend/src/types/request';
+import type {DeleteFileRessponse,UploadFileResponse,ArticleDetailResponse,BrowseArticlesResponse,CreateArticleResponse, APIResponse, CodeResponse, LoginResponse, SignupResponse } from '../../../backend/src/types/response';
 const API_URL = 'http://127.0.0.1:3000/';
 
 
@@ -67,3 +67,28 @@ export const API_BrowseArticle = async (
   const response = await api.post<BrowseArticlesResponse>('/browse_article', body);
   return response.data;
 };
+
+export const API_GetArticleDetail = async (
+  article_id: string
+): Promise<ArticleDetailResponse> => {
+  const response = await api.post<ArticleDetailResponse>('/article_detail', {
+    article_id,
+  } as ArticleDetailBody);
+  return response.data;
+};
+
+export const API_UploadFile = async (file: File): Promise<UploadFileResponse> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post<UploadFileResponse>('/upload_file', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response.data
+}
+
+export const API_DeleteFile = async (file_url: string): Promise<DeleteFileRessponse> => {
+  const response = await api.delete<DeleteFileRessponse>('/delete_file', { data: { file_url } })
+  return response.data
+}
+
+
