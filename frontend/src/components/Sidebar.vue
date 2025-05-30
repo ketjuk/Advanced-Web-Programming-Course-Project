@@ -29,9 +29,9 @@
 
     <!-- 底部菜单 -->
     <el-menu class="menu-bottom" @select="handleSelect">
-      <el-menu-item index="/more">
+      <el-menu-item index="/more" @click="handleLogout">
         <el-icon><More /></el-icon>
-        <span>More</span>
+        <span>Logout</span>
       </el-menu-item>
     </el-menu>
   </div>
@@ -48,9 +48,12 @@ const router = useRouter()
 const route = useRoute()
 
 const active = ref(route.path)
-watch(() => route.path, (newPath) => {
-  active.value = newPath
-})
+watch(
+  () => route.path,
+  (newPath) => {
+    active.value = newPath
+  },
+)
 
 const isLoggedIn = ref(false)
 const loginRef = ref(null)
@@ -74,6 +77,14 @@ const handleLoginSuccess = (userData: { username: string; token: string }) => {
 
 const checkViewport = () => {
   isMobileView.value = window.innerWidth <= 850
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  isLoggedIn.value = false
+  router.push('/')
+  ElMessage.success('Logged out successfully')
 }
 
 const handleSelect = (index: string) => {

@@ -9,16 +9,12 @@
       You haven't published any posts yet.
     </div>
     <div v-else class="articles-list">
-      <div
-        v-for="article in articles"
-        :key="article.article_id"
-        class="article-card"
-        @click="openArticleDetail(article.article_id)"
-      >
-        <div class="article-image">
+      <div v-for="article in articles" :key="article.article_id" class="article-card">
+        <div class="delete-button" @click.stop="handleDelete(article.article_id)">×</div>
+        <div class="article-image" @click="openArticleDetail(article.article_id)">
           <img :src="getImageUrl(article.image)" :alt="article.title" />
         </div>
-        <div class="article-content">
+        <div class="article-content" @click="openArticleDetail(article.article_id)">
           <h2>{{ article.title }}</h2>
           <p class="date">{{ formatDate(article.createdAt) }}</p>
         </div>
@@ -33,7 +29,7 @@
         <div v-else-if="articleDetailError" class="error">{{ articleDetailError }}</div>
         <div v-else-if="articleDetail" class="article-detail">
           <div class="article-image">
-            <img :src="articleDetail.image || getDefaultImage()" :alt="articleDetail.title" />
+            <img :src="getImageUrl(articleDetail.image)" :alt="articleDetail.title" />
           </div>
           <div class="article-info">
             <h2>{{ articleDetail.title }}</h2>
@@ -45,6 +41,17 @@
               <span class="likes">❤️ {{ articleDetail.likes }} likes</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showDeleteConfirm" class="confirm-overlay" @click="cancelDelete">
+      <div class="confirm-dialog" @click.stop>
+        <h3>Delete Post</h3>
+        <p>Are you sure you want to delete this?</p>
+        <div class="confirm-buttons">
+          <button class="cancel-btn" @click="cancelDelete">Cancel</button>
+          <button class="delete-btn" @click="confirmDelete">Delete</button>
         </div>
       </div>
     </div>
@@ -81,6 +88,8 @@ export default defineComponent({
     const articleDetail = ref<ArticleDetail | null>(null)
     const articleDetailLoading = ref(false)
     const articleDetailError = ref('')
+    const showDeleteConfirm = ref(false)
+    const articleToDelete = ref<string | null>(null)
 
     const fetchUserArticles = async () => {
       try {
@@ -164,7 +173,7 @@ export default defineComponent({
 
     const getImageUrl = (image: string | string[] | undefined) => {
       if (!image) return getDefaultImage()
-      
+
       // Handle array of images (take the first one)
       if (Array.isArray(image) && image.length > 0) {
         const firstImage = image[0]
@@ -172,15 +181,34 @@ export default defineComponent({
         if (firstImage.startsWith('/uploads/')) return `http://localhost:3000${firstImage}`
         return `http://localhost:3000/uploads/${firstImage}`
       }
-      
+
       // Handle single image as string
       if (typeof image === 'string') {
         if (image.startsWith('http')) return image
         if (image.startsWith('/uploads/')) return `http://localhost:3000${image}`
         return `http://localhost:3000/uploads/${image}`
       }
-      
+
       return getDefaultImage()
+    }
+
+    const handleDelete = (articleId: string) => {
+      showDeleteConfirm.value = true
+      articleToDelete.value = articleId
+    }
+
+    const cancelDelete = () => {
+      showDeleteConfirm.value = false
+      articleToDelete.value = null
+    }
+
+    const confirmDelete = () => {
+      if (articleToDelete.value) {
+        console.log(`Deleting article with id: ${articleToDelete.value}`)
+        // Implement delete logic here
+      }
+      showDeleteConfirm.value = false
+      articleToDelete.value = null
     }
 
     onMounted(() => {
@@ -199,7 +227,11 @@ export default defineComponent({
       articleDetailLoading,
       articleDetailError,
       openArticleDetail,
-      closeModal
+      closeModal,
+      handleDelete,
+      showDeleteConfirm,
+      cancelDelete,
+      confirmDelete,
     }
   },
 })
@@ -242,10 +274,34 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
   cursor: pointer;
+  position: relative;
 }
 
 .article-card:hover {
   transform: translateY(-2px);
+}
+
+.delete-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #ff4444;
+  color: white;
 }
 
 .article-image {
@@ -369,5 +425,69 @@ h1 {
   .article-detail .article-image {
     height: 300px;
   }
+}
+
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirm-dialog {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  text-align: center;
+}
+
+.confirm-dialog h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.confirm-dialog p {
+  margin: 0 0 20px 0;
+  color: #666;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.confirm-buttons button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.delete-btn {
+  background-color: #409eff;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #66b1ff;
 }
 </style>
