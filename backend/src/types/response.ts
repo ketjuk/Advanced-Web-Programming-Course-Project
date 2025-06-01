@@ -35,6 +35,10 @@ export interface CreateArticleRes {
   comments        : never[];
 }
 
+export interface DeleteArticleRes {
+  message         : string;
+}
+
 export interface CreateCommentRes {
   article_id      : string,
   author          : string,
@@ -58,15 +62,32 @@ export interface BrowseArticleRes {//single article
   image           : string[];
 }
 
+export interface BrowseArticleResDetail {//single article
+  article_id      : string;
+  title           : string;
+  content         : string;
+  author          : {
+    username      : string;
+    image         : string;
+  };
+  likes           : number;
+  createdAt       : string;
+  image           : string[];
+}
+
 export interface BrowseArticlesRes {//return several articles browsing
   articles        : BrowseArticleRes[];
 }
 
 export interface getUsersArticlesRes {//return the articles published by specific author
   articles: {
-    article_id: string;
-    title: string;
-    createdAt: string;
+    article_id    : string;
+    title         : string;
+    createdAt     : string;
+    likes         : number;
+    content       : string;
+    category      : string;
+    image         : string[];
   }[];
 }
 
@@ -94,7 +115,7 @@ export interface BrowseCommentRes {//first level comment
 }
 
 export interface ArticleDetailRes {//return signle detailed article
-  article         : BrowseArticleRes;
+  article         : BrowseArticleResDetail;
   liked           : boolean;
   collected       : boolean;
   comments        : BrowseCommentRes[];
@@ -151,6 +172,7 @@ export type LoginResponse               = APIResponse<LoginRes>;
 export type ChangeUserImageResponse     = APIResponse<ChangeUserImageRes>;
 export type CodeResponse                = APIResponse<CodeRes>;
 export type CreateArticleResponse       = APIResponse<CreateArticleRes>;
+export type DeleteArticleResponse       = APIResponse<DeleteArticleRes>;
 export type CreateCommentResponse       = APIResponse<CreateCommentRes>;
 export type DeleteCommentResponse       = APIResponse<DeleteCommentRes>;
 export type CommentReplyResponse        = APIResponse<CommentReplyRes>;

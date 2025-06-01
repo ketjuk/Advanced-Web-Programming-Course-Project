@@ -5,13 +5,15 @@ import express, { RequestHandler } from "express";
 import { upload } from "./uploadMiddleware";
 
 //request
+
 import {
-  ArticleDetailBody,
-  BrowseArticleBody,
-  CreateArticleBody,
   LoginBody,
   SignupBody,
   ChangeUserImageBody,
+  CreateArticleBody,
+  DeleteArticleBody,
+  BrowseArticleBody,
+  ArticleDetailBody,
   CreateCommentBody,
   DeleteCommentBody,
   CreateReplyBody,
@@ -37,9 +39,11 @@ import {
   unlikeArticleForUser,
 } from "./databaseService/userService";
 //article database
+
 import {
   articleExists,
   createArticle,
+  deleteArticleByAuthor,
   getBrowseArticle,
   getPostDetail,
   addComment,
@@ -61,6 +65,7 @@ import {
   DeleteCommentResponse,
   CommentReplyResponse,
   CreateArticleResponse,
+  DeleteArticleResponse,
   BrowseArticlesResponse,
   ArticleDetailResponse,
   getUsersArticlesResponse,
@@ -324,8 +329,6 @@ app.get("/request_code", (async (
   res.status(200).json({ success: true, data: { ...code } });
 }) as RequestHandler);
 
-
-
 /*
   POST method
   request with /create_article
@@ -420,6 +423,98 @@ app.post("/create_article", (async (
         author: user.username,
         likes: article.likes,
         comments: [],
+      },
+    };
+
+    res.status(201).json(response);
+  } catch (err) {
+    res.status(401).json({ error: (err as Error).message });
+  }
+}) as RequestHandler);
+
+/*
+  DELETE method
+  request with /delete_article
+  header:
+  Authentication: <token>
+  {
+    "article_id": "683a09b9956399ef7eb0e182"
+  }
+
+  if success, return with 201 status code and a json message:
+  {
+    "success": true,
+    "data": {
+      "message": "successfully delete the article"
+    }
+  }
+  
+  if token is wrong, return with 401 status code and a json message:
+  {
+    "error": "Invalid token"
+  }
+
+  if token is empty, return with 400 status code and a jaon message:
+  {
+    "error": "Missing token"
+  }
+
+  if article_id is not matched with any articles, return with 401 status code and a json message:
+  {
+    "error": "Article not found"
+  }
+
+  if the token is not from the author of the article, return with 401 status code and a json message:
+  {
+    "error": "only author can delete this article"
+  }
+
+  (!untested) if user cannot be found by provided token, return with 401 status code and a json message:
+  {
+    "error": "User not found"
+  }
+*/
+app.delete("/delete_article", (async (
+  req: express.Request<{}, {}, DeleteArticleBody>,
+  res: express.Response<DeleteArticleResponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
+  const { article_id } = req.body;
+
+  if (!token) {
+    res.status(400).json({ error: "Missing token" });
+    return;
+  }
+  if (!article_id) {
+    res.status(400).json({ error: "Missing article id" });
+    return;
+  }
+
+  try {
+    const loginInfo = await findLoginInfoByToken(token);
+    if (!loginInfo) throw new Error("Invalid token");
+
+    const user = await findUserByUsername(loginInfo.username);
+    if (!user) throw new Error("User not found");
+
+    const article_image = await deleteArticleByAuthor(
+      user._id.toString(),
+      article_id
+    );
+
+    for (const fileUrl of article_image) {
+      const urlPath = new URL(fileUrl).pathname;
+      const absolutePath = path.resolve(__dirname, "..", `.${urlPath}`);
+
+      if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
+      }
+    }
+
+    const response: DeleteArticleResponse = {
+      success: true,
+      data: {
+        message: "successfully delete the article",
       },
     };
 
@@ -847,28 +942,23 @@ app.post("/search_user", (async (
   {
     "success": true,
     "data": {
-      "articles": [
-        {
-          "article_id": "6812251120cbc77f8a604be3",
-          "title": "test article",
-          "author": {
-            "username": "111@11.com",
-            "image": ""
-          },
-          "likes": 0,
-          "createdAt": "2025-04-30T13:26:41.639Z"
+      "article": {
+        "article_id": "683a02f9e27f3be70246bcfc",
+        "title": "corridor",
+        "content": "a",
+        "author": {
+          "username": "kiki",
+          "image": ""
         },
-        {
-          "article_id": "681224058cb26ccf73a1b4ec",
-          "title": "test article",
-          "author": {
-            "username": "111@11.com",
-            "image": ""
-          },
-          "likes": 0,
-          "createdAt": "2025-04-30T13:22:13.667Z"
-        }
-      ]
+        "likes": 0,
+        "createdAt": "2025-05-30T19:11:53.276Z",
+        "image": [
+          "/uploads/1748632302974-.jpeg"
+        ]
+      },
+      "liked": false,
+      "collected": false,
+      "comments": []
     }
   }
   
@@ -1013,6 +1103,7 @@ app.post("/article_detail", (async (
         article: {
           article_id: article._id.toString(),
           title: article.title,
+          content: article.content,
           author: {
             username: (article.author as any).username,
             image: (article.author as any).image,
@@ -1051,14 +1142,58 @@ app.post("/article_detail", (async (
     "data": {
       "articles": [
         {
+          "article_id": "683a0d5f68496f9c608daf18",
+          "title": "test to delete",
+          "createdAt": "2025-05-30T19:56:15.404Z",
+          "likes": 0,
+          "content": "test",
+          "category": "test",
+          "image": [
+            "http://localhost:3000/upload/test_delete.jpg"
+          ]
+        },
+        {
+          "article_id": "6836ddaecca69b94f85da715",
+          "title": "test image2",
+          "createdAt": "2025-05-28T09:55:58.024Z",
+          "likes": 0,
+          "content": "test",
+          "category": "test",
+          "image": [
+            "http://localhost:3000/upload/1.jpg",
+            "http://localhost:3000/upload/2.jpg"
+          ]
+        },
+        {
+          "article_id": "6836dd0d90bc301d6623aa7f",
+          "title": "test image",
+          "createdAt": "2025-05-28T09:53:17.163Z",
+          "likes": 0,
+          "content": "test",
+          "category": "test",
+          "image": []
+        },
+        {
           "article_id": "6812251120cbc77f8a604be3",
           "title": "test article",
-          "createdAt": "2025-04-30T13:26:41.639Z"
+          "createdAt": "2025-04-30T13:26:41.639Z",
+          "likes": 0,
+          "content": "some text",
+          "category": "some text",
+          "image": [
+            ""
+          ]
         },
         {
           "article_id": "681224058cb26ccf73a1b4ec",
           "title": "test article",
-          "createdAt": "2025-04-30T13:22:13.667Z"
+          "createdAt": "2025-04-30T13:22:13.667Z",
+          "likes": 0,
+          "content": "some text",
+          "category": "some text",
+          "image": [
+            ""
+          ]
         }
       ]
     }
@@ -1114,11 +1249,11 @@ app.get("/get_user_articles", (async (
           article_id: article._id.toString(),
           title: article.title,
           createdAt: article.createdAt.toISOString(),
-          image: article.image?.length
-            ? article.image[0]
-            : `http://localhost:3000/uploads/${
-                Math.floor(Math.random() * 8) + 1
-              }.jpg`,
+
+          likes: article.likes,
+          content: article.content,
+          category: article.content,
+          image: article.image,
         })),
       },
     };

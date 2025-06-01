@@ -18,7 +18,9 @@ deploy_backend:
     - |
       ssh ec2-user@51.20.184.18 << 'EOF'
         cd ~/tddd27_2025_web/backend
-        git pull origin Yi
+        git fetch --all
+        git reset --hard origin/Yi
+        git clean -fd
         yarn install
         yarn build
         pkill -f "ts-node" || true
