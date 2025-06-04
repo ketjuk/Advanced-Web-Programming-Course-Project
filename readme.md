@@ -49,3 +49,5 @@ go to each dir to run ```yarn``` to install all the dependencies
 2. /TDDD27_2025_web/frontend 
 3. /TDDD27_2025_web/backend (temporary don't have)
 
+Screencast links:
+Yi: https://vimeo.com/1090617949
