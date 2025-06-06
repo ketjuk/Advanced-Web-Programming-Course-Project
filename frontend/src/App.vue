@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
+import Login from './components/Login.vue'
 </script>
 
 <template>
   <div class="body">
     <div class="wrapper">
       <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/"></RouterLink>
       </nav>
     </div>
     <RouterView />
@@ -16,7 +16,7 @@ import HelloWorld from './components/HelloWorld.vue'
 </template>
 
 <style scoped>
-.body{
+.body {
   width: 100%;
   background-color: #ccc;
 }

@@ -1,8 +1,20 @@
-*{
+* {
   margin: 0;
   padding: 0;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  overflow: hidden;
+  /* IE */
 }
-img{
+*::-webkit-scrollbar {
+  display: none;
+  /* Chrome / Safari */
+}
+html,body{
+  overflow: auto;
+}
+img {
   width: 100%;
   height: 100%;
 }

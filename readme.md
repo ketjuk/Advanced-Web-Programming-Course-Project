@@ -12,13 +12,13 @@ Users can also upload images and other files, which allows them to update their 
 ## frontend techs
 
 1. Vue3 --typescript
-2. ElementUI for components
+2. ElementPlus for components
 3. axios for http request
 
 ## backend techs
 1. node.js
-2. express (temporary)
-3. mongodb helper mongoose (temporary)
+2. express
+3. mongodb helper mongoose
 
 ## other stuff
 
@@ -49,3 +49,9 @@ go to each dir to run ```yarn``` to install all the dependencies
 2. /TDDD27_2025_web/frontend 
 3. /TDDD27_2025_web/backend (temporary don't have)
 
+Screencast links:
+Yi: https://vimeo.com/1090617949
+Dun Lu(dunlu530): https://www.youtube.com/watch?v=dfzZEoyTAYA
+Xiaoqi Jiang: https://www.youtube.com/watch?v=NaFafj-WREo
+
+overall project: https://www.youtube.com/watch?v=gWzgLX30BnE
