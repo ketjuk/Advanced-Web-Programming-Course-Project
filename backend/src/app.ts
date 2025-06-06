@@ -1,6 +1,6 @@
-import connectDB from './db';
+import connectDB from "./db";
 
-import express, { RequestHandler } from 'express';
+import express, { RequestHandler } from "express";
 
 import { upload } from './uploadMiddleware';
 
@@ -338,16 +338,16 @@ app.post('/create_article', (async (req: express.Request<{}, {}, CreateArticleBo
   const { title, category, content, image } = req.body;
 
   if (!token || !title || !category) {
-    res.status(400).json({ error: 'Missing token, title or category' });//can be divided afterwards
+    res.status(400).json({ error: "Missing token, title or category" }); //can be divided afterwards
     return;
   }
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     const article = await createArticle(title, category, image, content, user._id.toString());
 
@@ -509,40 +509,46 @@ app.delete('/delete_article', (async (req: express.Request<{}, {}, DeleteArticle
     "error": "User not found"
   }
 */
-app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBody>, res: express.Response<CreateCommentResponse | { error: string }>) => {
-  const token = req.header('Authentication');
+app.post("/create_comment", (async (
+  req: express.Request<{}, {}, CreateCommentBody>,
+  res: express.Response<CreateCommentResponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
   if (!token) {
-    res.status(400).json({ error: 'Missing token' });
+    res.status(400).json({ error: "Missing token" });
     return;
   }
 
   const { article_id, content } = req.body;
   if (!article_id) {
-    res.status(400).json({ error: 'Missing article id' });
+    res.status(400).json({ error: "Missing article id" });
     return;
   }
   if (!content) {
-    res.status(400).json({ error: 'Missing content' });
+    res.status(400).json({ error: "Missing content" });
     return;
   }
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     const comment = await addComment(article_id, user._id.toString(), content);
 
-    const update = await addCommentToUser(user._id.toString(), comment._id.toString());
+    const update = await addCommentToUser(
+      user._id.toString(),
+      comment._id.toString()
+    );
 
     const response: CreateCommentResponse = {
       success: true,
       data: {
         article_id: comment._id.toString(),
         author: user.username,
-        content: comment.content ?? '',
+        content: comment.content ?? "",
         replies: [],
       },
     };
@@ -595,24 +601,27 @@ app.post('/create_comment', (async (req: express.Request<{}, {}, CreateCommentBo
     "error": "User not found"
   }
 */
-app.post('/delete_comment', (async (req: express.Request<{}, {}, DeleteCommentBody>, res: express.Response<DeleteCommentResponse | { error: string }>) => {
-  const token = req.header('Authentication');
+app.post("/delete_comment", (async (
+  req: express.Request<{}, {}, DeleteCommentBody>,
+  res: express.Response<DeleteCommentResponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
   if (!token) {
-    res.status(400).json({ error: 'Missing token' });
+    res.status(400).json({ error: "Missing token" });
     return;
   }
   const { comment_id } = req.body;
   if (!comment_id) {
-    res.status(400).json({ error: 'Missing comment id' });
+    res.status(400).json({ error: "Missing comment id" });
     return;
   }
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     const comment = await deleteCommentById(comment_id, user._id.toString());
 
@@ -687,32 +696,39 @@ app.post('/delete_comment', (async (req: express.Request<{}, {}, DeleteCommentBo
     "error": "Comment not found"
   }
 */
-app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>, res: express.Response<CommentReplyResponse | { error: string }>) => {
-  const token = req.header('Authentication');
+app.post("/create_reply", (async (
+  req: express.Request<{}, {}, CreateReplyBody>,
+  res: express.Response<CommentReplyResponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
   if (!token) {
-    res.status(400).json({ error: 'Missing token' });
+    res.status(400).json({ error: "Missing token" });
     return;
   }
 
   const { comment_id, content } = req.body;
   if (!comment_id || !content) {
-    res.status(400).json({ error: 'Missing comment id or content' });
+    res.status(400).json({ error: "Missing comment id or content" });
     return;
   }
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
-    const reply = await addSecondLevelComment(comment_id, user._id.toString(), content);
+    const reply = await addSecondLevelComment(
+      comment_id,
+      user._id.toString(),
+      content
+    );
 
     const response: CommentReplyResponse = {
       success: true,
       data: {
-        _id: reply._id?.toString?.() || '',
+        _id: reply._id?.toString?.() || "",
         content: reply.content,
         createdAt: reply.createdAt.toISOString(),
         author: {
@@ -720,7 +736,7 @@ app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>,
           image: user.image,
         },
         isMine: true,
-      }
+      },
     };
 
     res.status(201).json(response);
@@ -796,35 +812,44 @@ app.post('/create_reply', (async (req: express.Request<{}, {}, CreateReplyBody>,
     "error": "User not found"
   }
 */
-app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, res: express.Response<SearchUserResponse | { error: string }>) => {
-  const token = req.header('Authentication');
-  if (!token) return res.status(400).json({ error: 'Missing token' });
+app.post("/search_user", (async (
+  req: express.Request<{}, {}, SearchUserBody>,
+  res: express.Response<SearchUserResponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
+  if (!token) return res.status(400).json({ error: "Missing token" });
 
   const { username } = req.body;
-  if (!username) return res.status(400).json({ error: 'Missing username' });
+  if (!username) return res.status(400).json({ error: "Missing username" });
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     const writtenComments = await getUserComments(user._id.toString());
-    const likedArticles = await getArticlesByUser(user.likedArticles.map(id => id.toString()));
-    const savedArticles = await getArticlesByUser(user.savedArticles.map(id => id.toString()));
-    const following = await getFollowingUsers(user.following.map(id => id.toString()));
+    const likedArticles = await getArticlesByUser(
+      user.likedArticles.map((id) => id.toString())
+    );
+    const savedArticles = await getArticlesByUser(
+      user.savedArticles.map((id) => id.toString())
+    );
+    const following = await getFollowingUsers(
+      user.following.map((id) => id.toString())
+    );
 
     const response: SearchUserResponse = {
       success: true,
       data: {
         username: user.username,
-        image: user.image || '',
+        image: user.image || "",
         writtenComments,
         likedArticles,
         savedArticles,
-        following
-      }
+        following,
+      },
     };
 
     res.status(200).json(response);
@@ -880,7 +905,10 @@ app.post('/search_user', (async (req: express.Request<{}, {}, SearchUserBody>, r
     "error": "Missing token"
   }
 */
-app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBody>, res: express.Response<BrowseArticlesResponse | { error: string }>) => {
+app.post("/browse_article", (async (
+  req: express.Request<{}, {}, BrowseArticleBody>,
+  res: express.Response<BrowseArticlesResponse | { error: string }>
+) => {
   // TODO: fix, no token and use get method instead of post method
   // const token = req.header('Authentication');
   let { sort_by, start, limit, category } = req.body;
@@ -888,8 +916,8 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
   //   res.status(400).json({ error: 'Missing token' });
   //   return;
   // }
-  if (sort_by !== 'time' && sort_by !== 'likes') {
-    sort_by = 'time';
+  if (sort_by !== "time" && sort_by !== "likes") {
+    sort_by = "time";
   }
   try {
     // const loginInfo = await findLoginInfoByToken(token);
@@ -900,7 +928,7 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
     const response: BrowseArticlesResponse = {
       success: true,
       data: {
-        articles: articles.map(article => ({
+        articles: articles.map((article) => ({
           article_id: article._id.toString(),
           title: article.title,
           author: {
@@ -975,21 +1003,24 @@ app.post('/browse_article', (async (req: express.Request<{}, {}, BrowseArticleBo
     "error": "Post not found"
   }
 */
-app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBody>, res: express.Response<ArticleDetailResponse | { error: string }>) => {
-  const token = req.header('Authentication');
+app.post("/article_detail", (async (
+  req: express.Request<{}, {}, ArticleDetailBody>,
+  res: express.Response<ArticleDetailResponse | { error: string }>
+) => {
+  const token = req.header("Authentication");
   const { article_id } = req.body;
   if (!token) {
-    res.status(400).json({ error: 'Missing token' });
+    res.status(400).json({ error: "Missing token" });
     return;
   }
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('Cannot find user information');
+    if (!user) throw new Error("Cannot find user information");
 
     const article = await getPostDetail(article_id, user._id.toString());
-    if (!article) throw new Error('Article not exist');
+    if (!article) throw new Error("Article not exist");
 
     const response: ArticleDetailResponse = {
       success: true,
@@ -1013,12 +1044,10 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
     };
 
     res.status(201).json(response);
-  }
-  catch (error) {
+  } catch (error) {
     res.status(401).json({ error: (error as Error).message });
   }
 }) as RequestHandler);
-
 
 /*
   GET method
@@ -1112,26 +1141,29 @@ app.post('/article_detail', (async (req: express.Request<{}, {}, ArticleDetailBo
     "error": "User not found"
   }
 */
-app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: express.Response<getUsersArticlesResponse>) => {
-  const token = req.header('Authentication');
+app.get("/get_user_articles", (async (
+  req: express.Request<{}, {}, {}>,
+  res: express.Response<getUsersArticlesResponse>
+) => {
+  const token = req.header("Authentication");
   if (!token) {
-    res.status(400).json({ success: false, error: 'Missing token' });
+    res.status(400).json({ success: false, error: "Missing token" });
     return;
   }
 
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('Cannot find user information');
+    if (!user) throw new Error("Cannot find user information");
 
     const articles = await getUserArticles(user._id.toString());
 
     const response: getUsersArticlesResponse = {
       success: true,
       data: {
-        articles: articles.map(article => ({
+        articles: articles.map((article: any) => ({
           article_id: article._id.toString(),
           title: article.title,
           createdAt: article.createdAt.toISOString(),
@@ -1148,7 +1180,6 @@ app.get('/get_user_articles', (async (req: express.Request<{}, {}, {}>, res: exp
     res.status(401).json({ success: false, error: (error as Error).message });
   }
 }) as RequestHandler);
-
 
 /*
   POST method
@@ -1192,25 +1223,28 @@ app.post('/like_article', (async (req: express.Request<{}, {}, LikeArticleBody>,
   const token = req.header('Authentication');
   let { article_id } = req.body;
   if (!token) {
-    res.status(400).json({ error: 'Missing token' });
+    res.status(400).json({ error: "Missing token" });
     return;
   }
   if (!article_id) {
-    res.status(400).json({ error: 'Missing article id' });
+    res.status(400).json({ error: "Missing article id" });
     return;
   }
   if (!(await articleExists(article_id))) {
-    res.status(404).json({ error: 'Article not found' });
+    res.status(404).json({ error: "Article not found" });
     return;
   }
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
-    const alternation_for_user = await likeArticleForUser(user._id.toString(), article_id);
+    const alternation_for_user = await likeArticleForUser(
+      user._id.toString(),
+      article_id
+    );
 
     const afternation_for_article = await likeArticle(article_id);
 
@@ -1269,25 +1303,28 @@ app.post('/unlike_article', (async (req: express.Request<{}, {}, UnlikeArticleBo
   const token = req.header('Authentication');
   let { article_id } = req.body;
   if (!token) {
-    res.status(400).json({ error: 'Missing token' });
+    res.status(400).json({ error: "Missing token" });
     return;
   }
   if (!article_id) {
-    res.status(400).json({ error: 'Missing article id' });
+    res.status(400).json({ error: "Missing article id" });
     return;
   }
   if (!(await articleExists(article_id))) {
-    res.status(404).json({ error: 'Article not found' });
+    res.status(404).json({ error: "Article not found" });
     return;
   }
   try {
     const loginInfo = await findLoginInfoByToken(token);
-    if (!loginInfo) throw new Error('Invalid token');
+    if (!loginInfo) throw new Error("Invalid token");
 
     const user = await findUserByUsername(loginInfo.username);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
-    const alternation_for_user = await unlikeArticleForUser(user._id.toString(), article_id);
+    const alternation_for_user = await unlikeArticleForUser(
+      user._id.toString(),
+      article_id
+    );
 
     const afternation_for_article = await unlikeArticle(article_id);
 
