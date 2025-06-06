@@ -1,6 +1,5 @@
 <template>
   <div class="sidebar">
-    <!-- 顶部菜单 -->
     <el-menu :default-active="active" class="menu-top" @select="handleSelect">
       <el-menu-item index="/">
         <el-icon><Compass /></el-icon>
@@ -10,24 +9,18 @@
         <el-icon><Edit /></el-icon>
         <span>Post</span>
       </el-menu-item>
-      <el-menu-item index="/notification">
-        <el-icon><Bell /></el-icon>
-        <span>Notification</span>
-      </el-menu-item>
       <el-menu-item index="/user" v-if="isLoggedIn">
         <el-icon><User /></el-icon>
         <span>User</span>
       </el-menu-item>
     </el-menu>
 
-    <!-- 未登录时显示登录按钮 -->
     <div class="login-section" v-if="!isLoggedIn">
       <Login @login-success="handleLoginSuccess" ref="loginRef" />
     </div>
 
     <div class="spacer"></div>
 
-    <!-- 底部菜单 -->
     <el-menu class="menu-bottom" @select="handleSelect">
       <el-menu-item index="/more">
         <el-icon><More /></el-icon>

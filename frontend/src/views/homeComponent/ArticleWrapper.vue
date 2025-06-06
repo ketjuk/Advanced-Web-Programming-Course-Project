@@ -39,7 +39,10 @@ const fetchArticles = async () => {
       articleList.push(...res.data.articles)
       start.value += res.data.articles.length
       await nextTick()
-      waitForImagesAndLayout()
+      setTimeout(() => {
+        waitForImagesAndLayout()
+      }, 50)
+ 
     }
   } catch (err) {
     console.error('Failed to fetch articles:', err)
@@ -83,7 +86,8 @@ function calculateLayout() {
   if (!wrapperRef.value) return
   const width = wrapperWidth.value
   const distance = 20
-  let columnArr: number[] = [], itemWidth = 0
+  let columnArr: number[] = [],
+    itemWidth = 0
 
   if (width > 990) {
     columnArr = [0, 0, 0, 0]

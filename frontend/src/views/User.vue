@@ -15,7 +15,10 @@
         @click="openArticleDetail(article.article_id)"
       >
         <div class="article-image">
-          <img :src="article.image || getDefaultImage()" :alt="article.title" />
+          <img
+              :src="`http://127.0.0.1:3000${article.image}`"
+              @error="handleImgError"
+            />
         </div>
         <div class="article-content">
           <h2>{{ article.title }}</h2>
@@ -32,7 +35,11 @@
         <div v-else-if="articleDetailError" class="error">{{ articleDetailError }}</div>
         <div v-else-if="articleDetail" class="article-detail">
           <div class="article-image">
-            <img :src="articleDetail.image || getDefaultImage()" :alt="articleDetail.title" />
+            <img
+              :src="`http://127.0.0.1:3000${articleDetail.image}`"
+              :alt="articleDetail.title"
+              @error="handleImgError"
+            />
           </div>
           <div class="article-info">
             <h2>{{ articleDetail.title }}</h2>
@@ -53,7 +60,8 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
-
+import { API_DeleteArticle } from '@/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
 interface Article {
   article_id: string
   title: string
@@ -80,6 +88,37 @@ export default defineComponent({
     const articleDetail = ref<ArticleDetail | null>(null)
     const articleDetailLoading = ref(false)
     const articleDetailError = ref('')
+    const deleteArticle = async (articleId: string) => {
+      try {
+        await ElMessageBox.confirm('Are you sure you want to delete this article?', 'Warning', {
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
+          type: 'warning',
+        })
+
+        const token = localStorage.getItem('token')
+        if (!token) {
+          ElMessage.error('Please log in.')
+          return
+        }
+
+        const res = await API_DeleteArticle({ article_id: articleId })
+
+        if (res.success) {
+          articles.value = articles.value.filter((a) => a.article_id !== articleId)
+          ElMessage.success('Article deleted successfully')
+        } else {
+          ElMessage.error('Failed to delete the article')
+        }
+      } catch (err: any) {
+        if (err === 'cancel') {
+          // 用户取消，无需提示
+          return
+        }
+        console.error('Delete error:', err)
+        ElMessage.error('An error occurred while deleting.')
+      }
+    }
 
     const fetchUserArticles = async () => {
       try {
@@ -158,7 +197,15 @@ export default defineComponent({
 
     const getDefaultImage = () => {
       const randomNum = Math.floor(Math.random() * 8) + 1
-      return `http://localhost:3000/upload/${randomNum}.jpg`
+      return `http://localhost:3000/uploads/${randomNum}.jpg`
+    }
+    const defaultImage = getDefaultImage()
+
+    const handleImgError = (e: Event) => {
+      const target = e.target as HTMLImageElement
+      const randomNum = Math.floor(Math.random() * 8) + 1
+      const timestamp = Date.now()
+      target.src = `http://localhost:3000/uploads/${randomNum}.jpg?retry=${timestamp}`
     }
 
     onMounted(() => {
@@ -177,6 +224,8 @@ export default defineComponent({
       articleDetailError,
       openArticleDetail,
       closeModal,
+      handleImgError,
+      deleteArticle,
     }
   },
 })

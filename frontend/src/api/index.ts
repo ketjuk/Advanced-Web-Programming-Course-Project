@@ -4,6 +4,7 @@ import type {
   UploadFileBody,
   ArticleDetailBody,
   BrowseArticleBody,
+  DeleteArticleBody,
   CreateArticleBody,
   LoginBody,
   SignupBody,
@@ -16,6 +17,7 @@ import type {
 
 import type {
   DeleteFileRessponse,
+  DeleteArticleResponse,
   UploadFileResponse,
   ArticleDetailResponse,
   BrowseArticlesResponse,
@@ -68,7 +70,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.request.use(logRequest, logError)
 api.interceptors.response.use(logResponse, logError)
 
-// 登录注册
 export const API_Login = async (data: LoginBody): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/log_in', data)
   return response.data
@@ -84,7 +85,6 @@ export const API_GetCode = async (): Promise<CodeResponse> => {
   return response.data
 }
 
-// 文章接口
 export const API_CreateArticle = async (data: CreateArticleBody): Promise<CreateArticleResponse> => {
   const response = await api.post<CreateArticleResponse>('/create_article', data)
   return response.data
@@ -159,8 +159,12 @@ export const API_CreateReply = async (
   return response.data
 }
 
-// 获取评论列表（注意：你需要提供这个接口）
 export const API_GetComments = async (article_id: string): Promise<ArticleDetailResponse> => {
   const response = await api.post<ArticleDetailResponse>('/article_detail', { article_id })
   return response.data
 }
+
+export const API_DeleteArticle = async (data: DeleteArticleBody): Promise<DeleteArticleResponse> => {
+  const response = await api.post<DeleteArticleResponse>('/delete_article', data);
+  return response.data;
+};

@@ -413,7 +413,7 @@ app.post('/create_article', (async (req: express.Request<{}, {}, CreateArticleBo
     "error": "User not found"
   }
 */
-app.delete('/delete_article', (async (req: express.Request<{}, {}, DeleteArticleBody>, res: express.Response<DeleteArticleResponse | { error: string }>) => {
+app.post('/delete_article', (async (req: express.Request<{}, {}, DeleteArticleBody>, res: express.Response<DeleteArticleResponse | { error: string }>) => {
   const token = req.header('Authentication');
   const { article_id } = req.body;
 

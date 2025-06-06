@@ -7,24 +7,52 @@ const props = defineProps<{
   createdAt: string
   coverImage: string
 }>()
+
+// 获取随机默认图片
+const getRandomImage = () => {
+  const randomNum = Math.floor(Math.random() * 8) + 1
+  return `http://localhost:3000/uploads/${randomNum}.jpg`
+}
+
+// 封面图加载失败处理
+const handleCoverError = (e: Event) => {
+  const target = e.target as HTMLImageElement
+  const randomNum = Math.floor(Math.random() * 8) + 1
+  const timestamp = Date.now()
+  target.src = `http://localhost:3000/uploads/${randomNum}.jpg?retry=${timestamp}`
+}
+
+// 头像加载失败处理
+const handleAvatarError = (e: Event) => {
+  const target = e.target as HTMLImageElement
+  const randomNum = Math.floor(Math.random() * 8) + 1
+  const timestamp = Date.now()
+  target.src = `http://localhost:3000/uploads/${randomNum}.jpg?retry=${timestamp}`
+}
 </script>
 
 <template>
   <div class="article-item" @click="$emit('click')">
-    <!-- Cover image -->
+    <!-- 封面图 -->
     <img
-      :src="`http://localhost:3000${coverImage}` || '/default-cover.png'"
+      :src="`http://localhost:3000${coverImage}`"
       alt="cover"
       class="cover"
+      @error="handleCoverError"
     />
 
-    <!-- Title -->
+    <!-- 标题 -->
     <div class="title">{{ title }}</div>
 
-    <!-- Info bar -->
+    <!-- 信息栏 -->
     <div class="info-bar">
       <div class="author-info">
-        <img :src="authorAvatar || '/default-avatar.png'" alt="avatar" class="avatar" />
+        <img
+          :src="authorAvatar ? `http://localhost:3000${authorAvatar}` : getRandomImage()"
+          alt="avatar"
+          class="avatar"
+          @error="handleAvatarError"
+        />
         <span class="author-name">{{ author }}</span>
       </div>
       <div class="likes">❤️ {{ likes }}</div>

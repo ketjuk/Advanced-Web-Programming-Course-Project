@@ -1,6 +1,5 @@
 <template>
   <div>
-    <ArticleType />
     <ArticleWrapper />
   </div>
 </template>

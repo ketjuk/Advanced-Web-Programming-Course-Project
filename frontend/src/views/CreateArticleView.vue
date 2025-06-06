@@ -133,12 +133,12 @@ const customUpload = async (options: UploadRequestOptions) => {
 }
 
 const handleRemove = async (file: any) => {
-  const idx = fileList.value.findIndex(f => f.name === file.name)   // 用 name 或 uid
+  const idx = fileList.value.findIndex(f => f.name === file.name)   
   console.log('Removing file at index:', fileList.value, file.url)
 
   if (idx !== -1) {
     try {
-      const res = await API_DeleteFile(fileList.value[idx].url)      // 传真正的服务器 url
+      const res = await API_DeleteFile(fileList.value[idx].url)   
       if (res.success) {
         fileList.value.splice(idx, 1)
         form.value.image?.splice(idx, 1)
